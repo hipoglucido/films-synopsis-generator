@@ -1,7 +1,6 @@
 # Films Synopsis Generator
 
-##Summary
-
+## Summary
 The goal of this project is to build a model that is able to generate different film synopsys from a set of predefined genres. The model is LSTM [one to many](http://karpathy.github.io/assets/rnn/diags.jpeg)
 
 For training the net we will be using a dataset of >100K pairs of <genres,synopsis> (data is in spanish).
