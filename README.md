@@ -7,7 +7,7 @@ For training the net we will be using a dataset of >100K pairs of <genres,synops
 
 ## Project folder structure
 Lets put the code in the `src` folder and all the input and output data in the `data` folder (without pushing any data to the repo).
-`
+```
 .
 ├── data
 │   ├── input
@@ -23,7 +23,7 @@ Lets put the code in the `src` folder and all the input and output data in the `
 ├── README.md
 └── src
     └── data_loading_example.py
-`
+```
 
 
 ## Useful links
