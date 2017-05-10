@@ -5,7 +5,8 @@ The goal of this project is to build a model that is able to generate different 
 
 For training the net we will be using a dataset of >100K pairs of <genres,synopsis> (data is in spanish).
 
-## Documentation
+## Useful links
 - RNN basics: [The Unreasonable Effectiveness of Recurrent Neural Networks](http://karpathy.github.io/2015/05/21/rnn-effectiveness/)
 - LSTM basics: [Understanding LSTM Networks](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
 - At prediction time we will use Beam Search to generate various synopsis from the same set of genres: [Beam Search video](https://www.youtube.com/watch?v=UXW6Cs82UKo)
+- Repo that uses LSTM + beamsearch to generate headlines of paragraphs ([link](https://github.com/udibr/headlines))
