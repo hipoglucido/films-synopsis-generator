@@ -13,6 +13,7 @@ Lets put the code in the `src` folder and all the input and output data in the `
 │   ├── input
 │   │   ├── datasets
 │   │   │   ├── raw
+│   │   │   │   └── synopsis_genres.csv
 │   │   │   ├── test
 │   │   │   └── train
 │   │   └── weights
@@ -22,7 +23,8 @@ Lets put the code in the `src` folder and all the input and output data in the `
 ├── proposal.pdf
 ├── README.md
 └── src
-    └── data_loading_example.py
+    ├── data_loading_example.py
+    └── settings.py
 ```
 
 
