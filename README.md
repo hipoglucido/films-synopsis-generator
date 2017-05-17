@@ -32,4 +32,5 @@ Lets put the code in the `src` folder and all the input and output data in the `
 - RNN basics: [The Unreasonable Effectiveness of Recurrent Neural Networks](http://karpathy.github.io/2015/05/21/rnn-effectiveness/)
 - LSTM basics: [Understanding LSTM Networks](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
 - At prediction time we will use Beam Search to generate various synopsis from the same set of genres: [Beam Search video](https://www.youtube.com/watch?v=UXW6Cs82UKo)
-- Repo that uses LSTM + beamsearch to generate headlines of paragraphs ([link](https://github.com/udibr/headlines))
+- Repo that uses LSTM + beamsearch to generate headlines of paragraphs: [headlines](https://github.com/udibr/headlines)
+- Repo that uses a keras one-to-many model as well (for image captioning specifically): [caption_generator](https://github.com/anuragmishracse/caption_generator)
