@@ -2,13 +2,13 @@ import sqlite3
 import pandas as pd
 import settings
 import os
-
+import re
 import numpy as np
 
-#from keras.models import Sequential
-#from keras.layers import LSTM, Embedding, TimeDistributed, Dense, RepeatVector, Merge, Activation, Flatten
+from keras.models import Sequential
+from keras.layers import LSTM, Embedding, TimeDistributed, Dense, RepeatVector, Merge, Activation, Flatten
 from keras.preprocessing import sequence
-#from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint
 
 #import cPickle as pickle
 from sklearn.preprocessing import MultiLabelBinarizer
@@ -29,19 +29,22 @@ class CaptionGenerator():
         #self.encoded_images = pickle.load( open( "encoded_images.p", "rb" ) )
         self.variable_initializer()
         
-
+    def tokenize(self,s):
+        return ' '.join(re.findall(r"[\w]+|[^\s\w]", s))
+        
     def variable_initializer(self):
-        self.df = pd.read_csv(filepath_or_buffer  = os.path.join(settings.RAW_DATA_DIR,'synopsis_genres.csv'),sep = '#',encoding = 'latin_1',            index_col = 'ID',nrows = 50)
+        self.df = pd.read_csv(filepath_or_buffer  = os.path.join(settings.RAW_DATA_DIR,'synopsis_genres.csv'),sep = '#',encoding = 'latin_1',index_col = 'ID',nrows = 50)
         df = self.df
         df.info()
         print(df.head())
         nb_samples = df.shape[0]
-        self.caps = list(df['Synopsis'].values)
+        self.caps = list(df['Synopsis'].map(self.tokenize).values)
+        print(self.caps)
         caps = self.caps
-        total_samples=0
+        self.total_samples=0
         for text in caps:
-            total_samples+=len(text.split())-1
-        print("Total samples : "+str(total_samples))
+            self.total_samples+=len(text.split())-1
+        print("Total samples : "+str(self.total_samples))
         
         words = [txt.split() for txt in caps]
         unique = []
@@ -73,7 +76,7 @@ class CaptionGenerator():
     def to_genre(self, x):
         return '|'.join(self.mlb.inverse_transform(x[None,:])[0])
     def to_text(self, x):
-        return ' '.join([self.index_word[i] for i in x])
+        return ' '.join([self.index_word[i] for i in x if i != 0])
     def data_generator(self, batch_size = 32):
         partial_caps = []
         next_words = []
@@ -126,7 +129,7 @@ class CaptionGenerator():
         image_model = Sequential()
         #image_model.add(base_model)
         #image_model.add(Flatten())
-        image_model.add(Dense(EMBEDDING_DIM, input_dim = 4096, activation='relu'))
+        image_model.add(Dense(EMBEDDING_DIM, input_dim = len(self.mlb.classes_), activation='relu'))
 
         image_model.add(RepeatVector(self.max_cap_len))
 
@@ -151,7 +154,35 @@ class CaptionGenerator():
 
     def get_word(self,index):
         return self.index_word[index]    
+
         
+        
+from keras.callbacks import ModelCheckpoint
+
+def train_model(weight = None, batch_size=32, epochs = 10):
+
+    cg = CaptionGenerator()
+    model = cg.create_model()
+
+    if weight != None:
+        model.load_weights(weight)
+
+    counter = 0
+    file_name = 'weights-improvement-{epoch:02d}.hdf5'
+    checkpoint = ModelCheckpoint(file_name, monitor='loss', verbose=1, save_best_only=True, mode='min')
+    callbacks_list = [checkpoint]
+    print(cg.total_samples/batch_size)
+    model.fit_generator(cg.data_generator(batch_size=batch_size), steps_per_epoch=cg.total_samples/batch_size, epochs=epochs, verbose=2, callbacks=callbacks_list)
+    try:
+        model.save('WholeModel.h5', overwrite=True)
+        model.save_weights('Weights.h5',overwrite=True)
+    except:
+        print("Error in saving model.")
+    print("Training complete...\n")
+
+if __name__ == '__main__':
+    train_model(epochs=50)
+'''
 c = CaptionGenerator()
 
 from time import sleep 
@@ -163,7 +194,6 @@ for a,b in c.data_generator():
         print(c.to_text(a[1][i]))
         print(c.to_text(np.nonzero(b[i])[0]))
         print('_______________________________________')
-    break
+    
     #sleep(0.1)
-print(len(a))
-
+'''
