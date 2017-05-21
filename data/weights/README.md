@@ -1,0 +1,1 @@
+This folder is where the network will write and read the weights. The problem of overwritting is unlikely since the filenames of the weight files include the loss and the epoch, so hardly two filenames will be the same.
