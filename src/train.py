@@ -51,6 +51,7 @@ class Network():
 
     def load_weights(self):
         self.model.load_weights(settings.WEIGHTS_PATH)
+        settings.logger.info("Loaded weights "+settings.WEIGHTS_PATH)
             
     def compile(self):
         self.model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
@@ -58,12 +59,12 @@ class Network():
 
     def train(self):
         """
-        Train the model
+        Train the model.
         """
         assert self.generator is not None
 
         weights_name = 'LSTM_weights-{epoch:03d}-tloss{loss:.4f}.hdf5'
-        file_name = os.path.join(settings.WEIGHTS_DIR,)
+        file_name = os.path.join(settings.WEIGHTS_DIR)
         
         #Add callbacks
         callbacks_list = []
@@ -77,7 +78,8 @@ class Network():
         callbacks_list.append(tf_logs)
         
         #Fit the model
-        model.fit_generator(self.generator.generate(batch_size=settings.BATCH_SIZE),
+        self.model.fit_generator(
+                            iterator = self.generator.generate(),
                             steps_per_epoch=settings.STEPS_PER_EPOCH,
                             epochs=settings.EPOCHS,
                             workers=1,

@@ -1,7 +1,7 @@
 import os
 import data
 import settings
-import train
+import model
 
 import numpy as np
 
@@ -18,12 +18,14 @@ def test_generator():
             print(c.to_synopsis(a[1][i]))
             print(c.to_synopsis(np.nonzero(b[i])[0]))
             print('_______________________________________')
-        
-        #sleep(0.1)
-if __name__ == '__main__':
-    network = train.Network()
+
+def train_network():
+    network = model.Network()
     network.load_generator()
     network.build()
     network.load_weights()
     network.compile()
     network.train()
+if __name__ == '__main__':
+    #test_generator()
+    train_network()
