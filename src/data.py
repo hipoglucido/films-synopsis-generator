@@ -13,7 +13,7 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 from sklearn.externals import joblib
 
-class Generator():
+class Preprocessor():
 
     def __init__(self):
         """
@@ -27,21 +27,11 @@ class Generator():
         self.mlb = None
         self.genres_features = None
         self.synopses = None
-    def preprocess_and_save(self):
-        df = self.load_dataset()
-        
-        self.preprocess_synopses(df)
-        #self.load_genre_binarizer()
-        self.preprocess_genres(df)
-        self.filter_dataset()
-        
-        
-    def initialize(self):
-        #Read dataset into DataFrame
 
         
-        settings.logger.info("Vocabulary size: "+str(settings.VOCABULARY_SIZE))
-        
+    def build_indexes(self):
+
+        #TODO
         settings.logger.info("Building word indexes")
         #print(str(unique).encode('latin1'))
         self.word_to_index = {}
@@ -69,8 +59,7 @@ class Generator():
         most_frequent = sorted(word_freqs, key = lambda x: x[1], reverse = True)
         settings.logger.info("Most frequent words: " + str(most_frequent[:10]))
         
-        most_frequent = most_frequent[:settings.VOCABULARY_SIZE]
-        knwown_words = [w[0] for w in most_frequent]
+        knwown_words = [w[0] for w in most_frequent][:settings.VOCABULARY_SIZE]
         settings.logger.info("Only "+str(len(knwown_words))+" words will be considered (VOCABULARY_SIZE)")
         
         #Substitute any unkown word with <unk>
@@ -90,10 +79,26 @@ class Generator():
         dataset and should be called after preprocess_synopsis and
         preprocess_genres
         """
+        filtered_genres, filtered_synopses = [], []
         for genres, synopsis in zip(self.genres, self.synopses):
-            print(genres, synopsis)
+            known_words = len(synopsis) - synopsis.count(settings.UNKNOWN_TOKEN)
+            if known_words / len(synopsis) < settings.MINIMUM_KNOWN_PERC_TOKENS_PER_SYNOPSIS:
+                continue
+            if len(genres) == 0:
+                continue
+            filtered_genres.append(genres)
+            filtered_synopses.append(synopsis)
+        self.genres = filtered_genres
+        self.synopses = filtered_synopses    
         #settings.logger.info("Total tokens in corpus after preprocessing : "+str(corpus_tokens_count))
         
+    def save_data(self):
+        assert len(self.genres) == len(self.synopses)
+        films_preprocessed = [self.genres, self.synopses]
+        filepath = os.path.join(settings.DATA_DIR,str(len(films_preprocessed[0]))+"_preprocessed_films.pkl")
+        print(films_preprocessed)
+        joblib.dump(films_preprocessed, filepath)
+        settings.logger.info("Data saved to "+filepath) 
         
     
     def encode_genres(self):   
@@ -107,7 +112,7 @@ class Generator():
     def load_dataset(self):
         import pandas as pd
         if settings.USE_SMALL_DATASET:
-            nrows = 100
+            nrows = 1000
         else:
             nrows = None
         df = pd.read_csv(filepath_or_buffer  = os.path.join(settings.DATA_DIR,'synopsis_genres.csv'),sep = '#',encoding = 'latin_1',index_col = 'ID', nrows = nrows)
@@ -188,7 +193,12 @@ class Generator():
         Tokenize the synopsis, example:
         'HOLAA!! ¿Qué tal estás?'  -> 'holaa ! ! ¿ qué tal estás ?<eos>'
         """
-        return ' '.join(re.findall(r"[\w]+|[^\s\w]", s)).lower() + settings.EOS_TOKEN
+        return ' '.join(re.findall(r"[\w]+|[^\s\w]", s)).lower() + ' '+settings.EOS_TOKEN
+
+class Generator():
+
+    def __init__(self):
+        pass
 
     def to_genre(self, vector):
         """

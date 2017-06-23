@@ -21,10 +21,14 @@ def test_generator():
 
             
 def generate_files():
-    generator = data.Generator()
-    #generator.generate_genre_binarizer()
-    generator.preprocess_and_save()
-    #generator.generate_embedding_weights()
+    preprocessor = data.Preprocessor()
+    df = preprocessor.load_dataset()
+    
+    preprocessor.preprocess_synopses(df)
+    #self.load_genre_binarizer()
+    preprocessor.preprocess_genres(df)
+    preprocessor.filter_dataset()
+    preprocessor.save_data()
 
     
 def train_network():
