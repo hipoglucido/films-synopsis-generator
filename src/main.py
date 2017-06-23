@@ -1,15 +1,15 @@
 import os
 import data
 import settings
-import model
+#import model
 
 import numpy as np
 
 def test_generator():
     c = data.Generator()
-
+    c.initialize()
     from time import sleep 
-    t = 5000
+    t = 3000
     for i in range(1):
         a,b = c.generate().__next__()
         t-=1
@@ -19,6 +19,14 @@ def test_generator():
             print(c.to_synopsis(np.nonzero(b[i])[0]))
             print('_______________________________________')
 
+            
+def generate_files():
+    generator = data.Generator()
+    #generator.generate_genre_binarizer()
+    generator.preprocess_and_save()
+    #generator.generate_embedding_weights()
+
+    
 def train_network():
     network = model.Network()
     network.load_generator()
@@ -28,4 +36,5 @@ def train_network():
     network.train()
 if __name__ == '__main__':
     #test_generator()
-    train_network()
+    #train_network()
+    generate_files()
