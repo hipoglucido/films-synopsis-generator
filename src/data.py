@@ -47,6 +47,8 @@ class Preprocessor():
         #Keep the synopsis as a list
         
         self.synopses = list(df['Synopsis'].map(self.tokenize).values)
+
+        self.synopses = [self.clean_text(synopsis) for synopsis in self.synopses]
         
         from collections import defaultdict
             
@@ -72,6 +74,31 @@ class Preprocessor():
                     new_synopsis.append(settings.UNKNOWN_TOKEN)
             return new_synopsis
         self.synopses = [map_unkown_tokens(synopsis) for synopsis in self.synopses]
+
+    ''' Receives a string.
+    Returns that same string after being preprocessed.'''
+    def clean_text(self, text):
+
+        # Handle (...)
+        text_in_paren = re.findall("\([^\)]*\)", text)
+        if text_in_paren:
+            for del_text in text_in_paren:
+                text = text.replace(del_text, '')
+
+        # Handle digits
+        digits = re.findall(r'\d+', text)
+        if digits:
+            for digit in digits:
+                text = text.replace(digit, 'DIGITO')
+
+        # Remove puntuaction
+        #text = "".join(c for c in text if c not in ('¡','!','¿','?', ':', ';'))
+        text = re.sub(r'[^a-zA-Z\.]', '', text)
+
+        # Remove extra spaces that were left when cleaning
+        text = re.sub(r'\s+',' ', text)
+
+        return text
         
     def filter_dataset(self):
         """
