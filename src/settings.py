@@ -23,9 +23,10 @@ TENSORBOARD_LOGS_DIR = os.path.join(DATA_DIR, 'tensorboard_logs')
 
 ##FILES
 GENRE_BINARIZER_PATH = os.path.join(OTHERS_DIR, 'genre_binarizer_378_classes.pkl')
-WORD_TO_INDEX_PATH = os.path.join(OTHERS_DIR, 'genre_binarizer_378_classes.pkl')
+WORD_TO_INDEX_PATH = os.path.join(OTHERS_DIR, 'word_to_index.pkl')
 EMBEDDING_WEIGHTS_PATH = os.path.join(OTHERS_DIR, 'embedding_weights.hdf')
 WORD2VEC_MODEL_PATH = os.path.join(OTHERS_DIR, 'SBW-vectors-300-min5.txt')
+INPUT_PREPROCESSED_FILMS = os.path.join(DATA_DIR,"991_preprocessed_films.pkl")
 
 ## TRAINING
 BATCH_SIZE = 32
@@ -47,7 +48,8 @@ EMBEDDING_DIM = 300#128
 
 
 ## DEBUGGING
-USE_SMALL_DATASET = 0
+USE_SMALL_DATASET = 1
+USE_SMALL_WORD2VEC = 0
 PRINT_MODEL_SUMMARY = 1
 
 ## LOGGING

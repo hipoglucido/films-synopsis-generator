@@ -48,8 +48,6 @@ class Preprocessor():
         #Keep the synopsis as a list
         
         self.synopses = list(df['Synopsis'].map(self.tokenize).values)
-
-        self.synopses = [self.clean_text(synopsis) for synopsis in self.synopses]
         
         from collections import defaultdict
             
@@ -75,32 +73,8 @@ class Preprocessor():
                     new_synopsis.append(settings.UNKNOWN_TOKEN)
             return new_synopsis
         settings.logger.info("Mapping unkown tokens...")
-        self.synopses = [map_unkown_tokens(synopsis) for synopsis in self.synopses]
-
-    ''' Receives a string.
-    Returns that same string after being preprocessed.'''
-    def clean_text(self, text):
-
-        # Handle (...)
-        text_in_paren = re.findall("\([^\)]*\)", text)
-        if text_in_paren:
-            for del_text in text_in_paren:
-                text = text.replace(del_text, '')
-
-        # Handle digits
-        digits = re.findall(r'\d+', text)
-        if digits:
-            for digit in digits:
-                text = text.replace(digit, 'DIGITO')
-
-        # Remove puntuaction
-        #text = "".join(c for c in text if c not in ('¡','!','¿','?', ':', ';'))
-        text = re.sub(r'[^a-zA-Z\.]', '', text)
-
-        # Remove extra spaces that were left when cleaning
-        text = re.sub(r'\s+',' ', text)
-
-        return text
+        #self.synopses = [map_unkown_tokens(synopsis) for synopsis in self.synopses]
+        self.synopses = pd.Series(self.synopses).map(map_unkown_tokens)
         
     def filter_dataset(self):
         """
@@ -162,8 +136,12 @@ class Preprocessor():
         
     def generate_embedding_weights(self):        
         settings.logger.info('Loading Word2Vec model from '+settings.WORD2VEC_MODEL_PATH)
+        if settings.USE_SMALL_WORD2VEC:
+            nrows = 10000
+        else:
+            nrows = None
         model = pd.read_csv(settings.WORD2VEC_MODEL_PATH, sep = ' ', header = None, \
-                            index_col = 0, skiprows = 1, nrows = 2000)
+                            index_col = 0, skiprows = 1, nrows = nrows)
         settings.logger.info('Generating embedding weights matrix...')
         embedding_rows = len(self.vocabulary) + 1 # adding 1 to account for 0th index (for masking)
         embedding_weights = np.zeros((embedding_rows,settings.EMBEDDING_DIM))
