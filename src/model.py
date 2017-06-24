@@ -14,6 +14,7 @@ from keras.preprocessing import sequence
 from keras.callbacks import ModelCheckpoint, TensorBoard, LearningRateScheduler
 
 import tensorflow as tf
+from sklearn.externals import joblib
 
 class Network():
     """
@@ -22,13 +23,16 @@ class Network():
     def __init__(self):
         self.model = None
         self.generator = None
-        
+
     def load_generator(self):
         self.generator = data.Generator()
         self.generator.initialize()
         
     def build(self):
         settings.logger.info("Building model...")
+        if self.embedding_weights is None:
+            self.load_embeddings()
+
         #with tf.device("/gpu:1"):
         genres_model = Sequential()
         genres_model.add(Dense(units = settings.EMBEDDING_DIM,
@@ -37,10 +41,12 @@ class Network():
         genres_model.add(RepeatVector(settings.MAX_SYNOPSIS_LEN))
         #with tf.device("/gpu:0"):
         synopsis_model = Sequential()
-        synopsis_model.add(Embedding(input_dim = settings.VOCABULARY_SIZE, 
-                                output_dim = 256,
-                                input_length=settings.MAX_SYNOPSIS_LEN))
-        synopsis_model.add(LSTM(units = 256,
+        synopsis_model.add(Embedding(input_dim = settings.VOCABULARY_SIZE + 1,
+                                output_dim = settings.EMBEDDING_DIM,
+                                weights = [self.embedding_weights],
+                                input_length=settings.MAX_SYNOPSIS_LEN),
+                                trainable = False)
+        synopsis_model.add(LSTM(units = settings.EMBEDDING_DIM,
                             return_sequences=True))
         synopsis_model.add(TimeDistributed(Dense(settings.EMBEDDING_DIM)))
         #with tf.device("/gpu:1"):
@@ -56,6 +62,10 @@ class Network():
     def load_weights(self):
         self.model.load_weights(settings.WEIGHTS_PATH)
         settings.logger.info("Loaded weights "+settings.WEIGHTS_PATH)
+
+    def load_embeddings(self):
+        self.word_to_index = joblib.load(settings.WORD_TO_INDEX_PATH)
+        self.embedding_weights = joblib.load(settings.EMBEDDING_WEIGHTS_PATH)
             
     def compile(self):
         self.model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
@@ -89,3 +99,4 @@ class Network():
                             workers=1,
                             callbacks=callbacks_list)
 
+        #validation_data = None, validation_steps = None
