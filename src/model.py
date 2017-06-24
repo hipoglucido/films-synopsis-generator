@@ -41,7 +41,7 @@ class Network():
         genres_model.add(RepeatVector(settings.MAX_SYNOPSIS_LEN))
         #with tf.device("/gpu:0"):
         synopsis_model = Sequential()
-        synopsis_model.add(Embedding(input_dim = settings.VOCABULARY_SIZE + 1,
+        synopsis_model.add(Embedding(input_dim = settings.VOCABULARY_SIZE + 1 + 2,  # Extra +2 because UNK and EOS have own entry.
                                 output_dim = settings.EMBEDDING_DIM,
                                 weights = [self.embedding_weights],
                                 input_length=settings.MAX_SYNOPSIS_LEN),

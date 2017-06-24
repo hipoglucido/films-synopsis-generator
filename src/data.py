@@ -10,8 +10,10 @@ import pandas as pd
 import re
 
 from sklearn.preprocessing import MultiLabelBinarizer
-
+from collections import defaultdict
 from sklearn.externals import joblib
+from keras.preprocessing import sequence
+
 
 class Preprocessor():
 
@@ -143,7 +145,7 @@ class Preprocessor():
         model = pd.read_csv(settings.WORD2VEC_MODEL_PATH, sep = ' ', header = None, \
                             index_col = 0, skiprows = 1, nrows = nrows)
         settings.logger.info('Generating embedding weights matrix...')
-        embedding_rows = len(self.vocabulary) + 1 # adding 1 to account for 0th index (for masking)
+        embedding_rows = len(self.vocabulary) + 2 # adding 1 to account for 0th index (for masking) and 1 for the EOS
         embedding_weights = np.zeros((embedding_rows,settings.EMBEDDING_DIM))
         count = 0
         for index, word in enumerate(self.vocabulary):
@@ -153,6 +155,7 @@ class Preprocessor():
             except KeyError:
                 print(self.index_to_word[index],word)
                 count += 1
+        embedding_weights[embedding_rows-1, :] = settings.EOS_TOKEN
         settings.logger.info(str(count)+" tokens represented with zeros in the weight matrix")
         print(embedding_weights.shape)
 
@@ -162,8 +165,7 @@ class Preprocessor():
     def preprocess_genres(self, df):
         
         self.genres = list(df['Genre'].map(lambda x: x.split('|')))
-        
-        from collections import defaultdict
+
             
         genre_freqs = defaultdict(int)
         for genres_ in self.genres:
@@ -243,8 +245,6 @@ class Generator():
         Generate batches to feed the network.
         Batches are comprised of ((genre, previous_words), next_words))
         """
-        from keras.preprocessing import sequence
-        
         #Initialize batch variables
         previous_words_batch = []
         next_word_batch = []
