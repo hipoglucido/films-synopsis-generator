@@ -3,16 +3,23 @@ import data
 import settings
 import model
 from sklearn.externals import joblib
+import pickle as pk
 import numpy as np
+from sklearn.model_selection import train_test_split
+import nltk
 
 def test_generator():
-    c= data.Generator()
-    c.load_preprocessed_data()
+
+    synopses, genres = load_preprocessed_data(settings.INPUT_PREPROCESSED_FILMS)
+    X_train, X_val, y_train, y_val = train_test_split(
+        synopses, genres, test_size=settings.VALIDATION_SPLIT)
+    c= data.Generator(X_train, y_train)
     c.load_genre_binarizer()
     c.load_indexes()
     #a = g.generate().__next__()
     #g.get_train_val_generators()
-    from time import sleep 
+    from time import sleep
+
 
     while 1:
         for a,b in c.generate():
@@ -24,6 +31,7 @@ def test_generator():
 
             
 def generate_files():
+
     preprocessor = data.Preprocessor()
     df = preprocessor.load_dataset()
     
@@ -36,7 +44,23 @@ def generate_files():
     preprocessor.encode_synopses()
     preprocessor.save_data()
 
-    
+def check_paths():
+    if not os.path.exists(settings.DATA_DIR):
+        os.makedirs(settings.DATA_DIR)
+
+    if not os.path.exists(settings.OTHERS_DIR):
+        os.makedirs(settings.OTHERS_DIR)
+
+    if not os.path.exists(settings.WEIGHTS_DIR):
+        os.makedirs(settings.WEIGTHS_DIR)
+
+    if not os.path.exists(settings.TENSORBOARD_LOGS_DIR):
+        os.makedirs(settings.TENSORBOARD_LOGS_DIR)
+
+def check_nltk_resources():
+    nltk.download('averaged_perceptron_tagger')
+
+
 def train_network():
 
     network = model.Network()
@@ -47,20 +71,21 @@ def train_network():
     network.train()
 
 
-def load_preprocessed_data():
+def load_preprocessed_data(path):
     """
     Loads preprocessed lists of synopses and genres
     """
-    films_preprocessed = joblib.load(settings.INPUT_PREPROCESSED_FILMS)
-
-    synopses = films_preprocessed[0]
-    genres = films_preprocessed[1]
-    settings.logger.info("Loaded preprocessed films from " + str(settings.INPUT_PREPROCESSED_FILMS))
+    films_preprocessed = joblib.load(path)
+#    films_preprocessed = pk.load(path)
+    genres = films_preprocessed[0]
+    synopses = films_preprocessed[1]
+    settings.logger.info("Loaded preprocessed films from " + str(path))
     return synopses, genres
 
 
 if __name__ == '__main__':
-    #test_generator()
+    check_nltk_resources()
+    check_paths()
+    #generate_files()
+    test_generator()
     #train_network()
-    generate_files()
-    

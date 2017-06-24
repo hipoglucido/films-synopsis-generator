@@ -23,11 +23,11 @@ TENSORBOARD_LOGS_DIR = os.path.join(DATA_DIR, 'tensorboard_logs')
 
 ##FILES
 GENRE_BINARIZER_PATH = os.path.join(OTHERS_DIR, 'genre_binarizer_25_classes.pkl')
-WORD_TO_INDEX_PATH = os.path.join(OTHERS_DIR, 'word_to_index_28084.pkl')
-INDEX_TO_WORD_PATH = os.path.join(OTHERS_DIR, 'index_to_word_28084.pkl')
+WORD_TO_INDEX_PATH = os.path.join(OTHERS_DIR, 'word_to_index.pkl')
+INDEX_TO_WORD_PATH = os.path.join(OTHERS_DIR, 'index_to_word.pkl')
 EMBEDDING_WEIGHTS_PATH = os.path.join(OTHERS_DIR, 'embedding_weights.hdf')
 WORD2VEC_MODEL_PATH = os.path.join(OTHERS_DIR, 'SBW-vectors-300-min5.txt')
-INPUT_PREPROCESSED_FILMS = os.path.join(DATA_DIR,"4964_preprocessed_films.pkl")
+INPUT_PREPROCESSED_FILMS = os.path.join(DATA_DIR,"preprocessed_films.pkl")
 
 ## TRAINING
 BATCH_SIZE = 32
@@ -38,11 +38,12 @@ VALIDATION_SPLIT = 0.2
 STEPS_VAL = 1
 
 ## PREPROCESSING
-MAX_SYNOPSIS_LEN = 150
-VOCABULARY_SIZE = 50000 #None will use the whole corpus vocabulary (151852)
+MAX_SYNOPSIS_LEN = 200
+VOCABULARY_SIZE = 10000 #None will use the whole corpus vocabulary (151852)
 MAX_GENERES = 25
 EOS_TOKEN = '<eos>'
 UNKNOWN_TOKEN = '<unk>'
+DIGIT_TOKEN = 'DIGITO'
 MINIMUM_KNOWN_PERC_TOKENS_PER_SYNOPSIS = 0.7
 
 

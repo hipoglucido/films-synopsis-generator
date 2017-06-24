@@ -12,7 +12,6 @@ from keras.layers import LSTM, Embedding, TimeDistributed, Dense, RepeatVector, 
 #from keras.layers.merge import Concatenate
 from keras.preprocessing import sequence
 from keras.callbacks import ModelCheckpoint, TensorBoard, LearningRateScheduler
-from sklearn.model_selection import train_test_split
 
 import tensorflow as tf
 from sklearn.externals import joblib
@@ -24,14 +23,12 @@ class Network():
     def __init__(self):
         settings.logger.info("Starting network...")
         self.model = None
-        self.generator = None
+        self.generator_train = None
+        self.generator_val = None
 
-    def load_generators(self):
-        self.generator = data.Generator()
-        self.generator.load_preprocessed_data()
-        train_generator, val_generator = self.generator.get_train_val_generators()
-        self.train_generator = train_generator
-        self.val_generator = val_generator
+    def load_generators(self, X_train, X_val, y_train, y_val):
+        self.train_generator = data.Generator(X_train,y_train)
+        self.val_generator = data.Generator(X_val, y_val)
         #self.generator_val.initialize()
 
     def build(self):
@@ -42,12 +39,12 @@ class Network():
         #with tf.device("/gpu:1"):
         genres_model = Sequential()
         genres_model.add(Dense(units = settings.EMBEDDING_DIM,
-                              input_dim = len(self.generator.mlb.classes_),
+                              input_dim = settings.MAX_GENERES,
                               activation='relu'))
         genres_model.add(RepeatVector(settings.MAX_SYNOPSIS_LEN))
         #with tf.device("/gpu:0"):
         synopsis_model = Sequential()
-        synopsis_model.add(Embedding(input_dim = settings.VOCABULARY_SIZE + 1 + 2,  # Extra +2 because UNK and EOS have own entry.
+        synopsis_model.add(Embedding(input_dim = settings.VOCABULARY_SIZE + 1,
                                 output_dim = settings.EMBEDDING_DIM,
                                 weights = [self.embedding_weights],
                                 input_length=settings.MAX_SYNOPSIS_LEN),
