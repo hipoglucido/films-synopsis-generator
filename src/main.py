@@ -25,9 +25,12 @@ def generate_files():
     df = preprocessor.load_dataset()
     
     preprocessor.preprocess_synopses(df)
-    #self.load_genre_binarizer()
     preprocessor.preprocess_genres(df)
+    preprocessor.build_indexes()
+    preprocessor.generate_embedding_weights()
     preprocessor.filter_dataset()
+    preprocessor.encode_genres()
+    preprocessor.encode_synopses()
     preprocessor.save_data()
 
     
@@ -38,7 +41,13 @@ def train_network():
     network.load_weights()
     network.compile()
     network.train()
+
+
 if __name__ == '__main__':
     #test_generator()
     #train_network()
     generate_files()
+    #g= data.Generator()
+    #g.load_preprocessed_data()
+    #a = g.generate().__next__()
+    #g.get_train_val_generators()
