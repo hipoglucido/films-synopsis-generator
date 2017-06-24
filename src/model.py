@@ -12,6 +12,7 @@ from keras.layers import LSTM, Embedding, TimeDistributed, Dense, RepeatVector, 
 #from keras.layers.merge import Concatenate
 from keras.preprocessing import sequence
 from keras.callbacks import ModelCheckpoint, TensorBoard, LearningRateScheduler
+from sklearn.model_selection import train_test_split
 
 import tensorflow as tf
 from sklearn.externals import joblib
@@ -24,10 +25,14 @@ class Network():
         self.model = None
         self.generator = None
 
-    def load_generator(self):
-        self.generator = data.Generator()
-        self.generator.initialize()
-        
+    def load_generators(self, synopses, genres):
+        X_train, X_test, y_train, y_test = train_test_split(
+            synopses, genres, test_size = settings.VALIDATIN_SPLIT)
+        self.generator_train = data.Generator(X_train, y_train)
+        #self.generator_train.initialize()
+        self.generator_val = data.Generator(X_test, y_test)
+        #self.generator_val.initialize()
+
     def build(self):
         settings.logger.info("Building model...")
         if self.embedding_weights is None:
@@ -93,9 +98,11 @@ class Network():
         
         #Fit the model
         self.model.fit_generator(
-                            generator = self.generator.generate(),
+                            generator = self.generator_train.generate(),
                             steps_per_epoch=settings.STEPS_PER_EPOCH,
                             epochs=settings.EPOCHS,
+                            validation_data=self.generator_train.generate(),
+                            validation_steps=settings.STEPS_VAL,
                             workers=1,
                             callbacks=callbacks_list)
 

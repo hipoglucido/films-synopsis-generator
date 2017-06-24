@@ -54,6 +54,8 @@ class Preprocessor():
         #Keep the synopsis as a list
         
         self.synopses = list(df['Synopsis'].map(self.tokenize).values)
+
+        self.synopses = [self.clean_text(synopsis) for synopsis in self.synopses]
         
         from collections import defaultdict
             
@@ -70,7 +72,7 @@ class Preprocessor():
         settings.logger.info("Only "+str(len(self.vocabulary))+" words will be considered (VOCABULARY_SIZE)")
         
         #Substitute any unkown word with <unk>
-        count = 0
+        count = 0           # You don't use this variable for anything. The rest of 'count' variables are inside the function.
         total = len(self.synopses)
         def map_unkown_tokens(synopsis):
             new_synopsis = []
@@ -86,6 +88,32 @@ class Preprocessor():
         settings.logger.info("Mapping unkown tokens...")
         #self.synopses = [map_unkown_tokens(synopsis) for synopsis in self.synopses]
         #self.synopses = pd.Series(self.synopses).map(map_unkown_tokens)
+
+    ''' Receives a string.
+       Returns that same string after being preprocessed.'''
+
+    def clean_text(self, text):
+
+        # Handle (...)
+        text_in_paren = re.findall("\([^\)]*\)", text)
+        if text_in_paren:
+            for del_text in text_in_paren:
+                text = text.replace(del_text, '')
+
+        # Handle digits
+        digits = re.findall(r'\d+', text)
+        if digits:
+            for digit in digits:
+                text = text.replace(digit, 'DIGITO')
+
+        # Remove puntuaction
+        # text = "".join(c for c in text if c not in ('¡','!','¿','?', ':', ';'))
+        text = re.sub(r'[^a-zA-Z\.]', '', text)
+
+        # Remove extra spaces that were left when cleaning
+        text = re.sub(r'\s+', ' ', text)
+
+        return text
         
     def filter_dataset(self):
         """
@@ -215,16 +243,17 @@ class Preprocessor():
         """
         return ' '.join(re.findall(r"[\w]+|[^\s\w]", s)).lower() + ' '+settings.EOS_TOKEN
 
-class Generator():
 
+class Generator():
     def __init__(self):
-        pass
+        self.synopses = None
+        self.genres = None
 
     def to_genre(self, vector):
         """
         [0,0,1,0,1...] -> 'drama|comedia'
         """
-        return '|'.join(self.mlb.inverse_transform(vector[None,:])[0])
+        return '|'.join(self.mlb.inverse_transform(vector[None, :])[0])
 
     def to_synopsis(self, vectors):
         """
@@ -232,91 +261,81 @@ class Generator():
         text representation
         """
         return ' '.join([self.index_to_word[i] for i in vectors if i != 0])
-    
-    def load_preprocessed_data(self):
-        """
-        Loads preprocessed lists of synopses and genres
-        """
-        films_preprocessed = joblib.load(settings.INPUT_PREPROCESSED_FILMS)
-        
-        self.synopses = films_preprocessed[0]
-        self.genres = films_preprocessed[1]
-        settings.logger.info("Loaded preprocessed films from "+str(settings.INPUT_PREPROCESSED_FILMS))
-    
+
     def get_train_val_generators(self):
-        
-        #print(self.synopses)
-        #print(self.genres)
+
+        # print(self.synopses)
+        # print(self.genres)
         pass
-        
+
     def generate(self):
         """
         Generate batches to feed the network.
         Batches are comprised of ((genre, previous_words), next_words))
         """
-        #Initialize batch variables
+        # Initialize batch variables
         previous_words_batch = []
         next_word_batch = []
         genres_batch = []
-        
+
         settings.logger.info("Generating data...")
-        
-        #Keep track of how many batches have been fed
-        batches_fed_count = 0 
-        #Keep track of the current batch that is being built
+
+        # Keep track of how many batches have been fed
+        batches_fed_count = 0
+        # Keep track of the current batch that is being built
         current_batch_size = 0
         while 1:
             synopsis_counter = -1
-            #Iterate over all the synopsis
-            
+            # Iterate over all the synopsis
+
             for synopsis in self.synopses:
-                synopsis_counter+=1
-                genre = self.encoded_genres[synopsis_counter]
-                #Itearte over synopsis' words
+                synopsis_counter += 1
+                genre = self.genres[synopsis_counter]
+                # Itearte over synopsis' words
                 splitted_synopsis = synopsis.split()
-                
-                for i in range(len(splitted_synopsis)-1):
-                    #Grab next word and add it to the current batch
-                    next_word = synopsis.split()[i+1]
+
+                for i in range(len(splitted_synopsis) - 1):
+                    # Grab next word and add it to the current batch
+                    next_word = synopsis.split()[i + 1]
                     next = np.zeros(settings.VOCABULARY_SIZE)
                     next[self.word_to_index[next_word]] = 1
                     next_word_batch.append(next)
-                    
-                    #Grab previous words and add them to the current batch
-                    previous_words = [self.word_to_index[word] for word in splitted_synopsis[:i+1]]
+
+                    # Grab previous words and add them to the current batch
+                    previous_words = [self.word_to_index[word] for word in splitted_synopsis[:i + 1]]
                     previous_words_batch.append(previous_words)
-                    
-                    #Add the genre to the batch
+
+                    # Add the genre to the batch
                     genres_batch.append(genre)
-                    
-                    #Increment batch size
-                    current_batch_size+=1
-                    
-                    
-                    if current_batch_size<settings.BATCH_SIZE:
-                        #Keep building the batch
+
+                    # Increment batch size
+                    current_batch_size += 1
+
+                    if current_batch_size < settings.BATCH_SIZE:
+                        # Keep building the batch
                         continue
-                    #Batch is ready
+                    # Batch is ready
                     next_word_batch = np.asarray(next_word_batch)
                     genres_batch = np.asarray(genres_batch)
-                    
-                    #Padd previous words of synopses
-                    previous_words_batch = sequence.pad_sequences(previous_words_batch, maxlen = settings.MAX_SYNOPSIS_LEN, padding='post')
-                    #print(len(genres_batch),genres_batch[0].shape,previous_words_batch.shape,next_word_batch.shape)
-                    #print(next_word_batch.mean())
+
+                    # Padd previous words of synopses
+                    previous_words_batch = sequence.pad_sequences(previous_words_batch,
+                                                                  maxlen=settings.MAX_SYNOPSIS_LEN, padding='post')
+                    # print(len(genres_batch),genres_batch[0].shape,previous_words_batch.shape,next_word_batch.shape)
+                    # print(next_word_batch.mean())
                     if 0:
-                        for j in range(batch_size):
+                        for j in range(settings.batch_size):
                             print(str(self.to_genre(genres_batch[j])).encode('latin1'))
                             print(str(self.to_synopsis(previous_words_batch[j])).encode('latin1'))
                             print(str(self.to_synopsis(np.nonzero(next_word_batch[j])[0])).encode('latin1'))
                             print("************")
                         print("____________________________________________")
-                    #Yield batch
+                    # Yield batch
                     yield [[genres_batch, previous_words_batch], next_word_batch]
-                    batches_fed_count+=1
-                    #settings.logger.info("Batches yielded: "+str(batches_fed_count))
-                    
-                    #Reset variables
+                    batches_fed_count += 1
+                    # settings.logger.info("Batches yielded: "+str(batches_fed_count))
+
+                    # Reset variables
                     previous_words_batch = []
                     next_word_batch = []
                     genres_batch = []

@@ -2,7 +2,7 @@ import os
 import data
 import settings
 #import model
-
+from sklearn.externals import joblib
 import numpy as np
 
 def test_generator():
@@ -35,12 +35,25 @@ def generate_files():
 
     
 def train_network():
+    #synopses, genres = load_preprocessed_data()
     network = model.Network()
-    network.load_generator()
+    network.load_generators()       # Synopses and genres as parameter
     network.build()
     network.load_weights()
     network.compile()
     network.train()
+
+
+def load_preprocessed_data():
+    """
+    Loads preprocessed lists of synopses and genres
+    """
+    films_preprocessed = joblib.load(settings.INPUT_PREPROCESSED_FILMS)
+
+    synopses = films_preprocessed[0]
+    genres = films_preprocessed[1]
+    settings.logger.info("Loaded preprocessed films from " + str(settings.INPUT_PREPROCESSED_FILMS))
+    return synopses, genres
 
 
 if __name__ == '__main__':
