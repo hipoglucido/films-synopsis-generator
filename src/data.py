@@ -30,7 +30,11 @@ class Preprocessor():
         self.encoded_genres = None
         self.synopses = None
 
-        
+    def load_indexes(self):
+        self.word_to_index = joblib.load(os.path.join(settings.OTHERS_DIR, 'word_to_index_50000.pkl'))
+        self.index_to_word = joblib.load(os.path.join(settings.OTHERS_DIR, 'index_to_word_50000.pkl'))
+        settings.logger.info("Loaded index dictionaries")
+    
     def build_indexes(self):
         settings.logger.info("Building word indexes")
         #print(str(unique).encode('latin1'))
@@ -66,6 +70,8 @@ class Preprocessor():
         settings.logger.info("Only "+str(len(self.vocabulary))+" words will be considered (VOCABULARY_SIZE)")
         
         #Substitute any unkown word with <unk>
+        count = 0
+        total = len(self.synopses)
         def map_unkown_tokens(synopsis):
             new_synopsis = []
             for word in synopsis.split():
@@ -73,10 +79,13 @@ class Preprocessor():
                     new_synopsis.append(word)
                 else:
                     new_synopsis.append(settings.UNKNOWN_TOKEN)
+            count += 1
+            if count % 150 == 0:
+                settings.logger.info(str(count/total)[:4]+"% comleted...")
             return new_synopsis
         settings.logger.info("Mapping unkown tokens...")
         #self.synopses = [map_unkown_tokens(synopsis) for synopsis in self.synopses]
-        self.synopses = pd.Series(self.synopses).map(map_unkown_tokens)
+        #self.synopses = pd.Series(self.synopses).map(map_unkown_tokens)
         
     def filter_dataset(self):
         """
@@ -127,7 +136,7 @@ class Preprocessor():
     def load_dataset(self):
         import pandas as pd
         if settings.USE_SMALL_DATASET:
-            nrows = 10000
+            nrows = 5000
         else:
             nrows = None
         df = pd.read_csv(filepath_or_buffer  = os.path.join(settings.DATA_DIR,'synopsis_genres.csv'),sep = '#',encoding = 'latin_1',index_col = 'ID', nrows = nrows)
@@ -139,7 +148,7 @@ class Preprocessor():
     def generate_embedding_weights(self):        
         settings.logger.info('Loading Word2Vec model from '+settings.WORD2VEC_MODEL_PATH)
         if settings.USE_SMALL_WORD2VEC:
-            nrows = 10000
+            nrows = None
         else:
             nrows = None
         model = pd.read_csv(settings.WORD2VEC_MODEL_PATH, sep = ' ', header = None, \
