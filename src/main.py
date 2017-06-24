@@ -1,23 +1,26 @@
 import os
 import data
 import settings
-#import model
+import model
 from sklearn.externals import joblib
 import numpy as np
 
 def test_generator():
-    c = data.Generator()
-    c.initialize()
+    c= data.Generator()
+    c.load_preprocessed_data()
+    c.load_genre_binarizer()
+    c.load_indexes()
+    #a = g.generate().__next__()
+    #g.get_train_val_generators()
     from time import sleep 
-    t = 3000
-    for i in range(1):
-        a,b = c.generate().__next__()
-        t-=1
-        for i in range(a[0].shape[0]):
-            print(c.to_genre(a[0][i]))
-            print(c.to_synopsis(a[1][i]))
-            print(c.to_synopsis(np.nonzero(b[i])[0]))
-            print('_______________________________________')
+
+    while 1:
+        for a,b in c.generate():
+            for i in range(a[0].shape[0]):
+                print(c.to_genre(a[0][i]),a[0][i].shape)
+                print(c.to_synopsis(a[1][i]),len(a[1][i]),type(a[1][i][0]))
+                print(c.index_to_word[b[i]],type(b[i]))
+                print('_______________________________________')
 
             
 def generate_files():
@@ -35,7 +38,7 @@ def generate_files():
 
     
 def train_network():
-    #synopses, genres = load_preprocessed_data()
+
     network = model.Network()
     network.load_generators()       # Synopses and genres as parameter
     network.build()
@@ -60,7 +63,4 @@ if __name__ == '__main__':
     #test_generator()
     #train_network()
     generate_files()
-    #g= data.Generator()
-    #g.load_preprocessed_data()
-    #a = g.generate().__next__()
-    #g.get_train_val_generators()
+    

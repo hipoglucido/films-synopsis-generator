@@ -22,15 +22,16 @@ class Network():
     Class for training
     """
     def __init__(self):
+        settings.logger.info("Starting network...")
         self.model = None
         self.generator = None
 
-    def load_generators(self, synopses, genres):
-        X_train, X_test, y_train, y_test = train_test_split(
-            synopses, genres, test_size = settings.VALIDATIN_SPLIT)
-        self.generator_train = data.Generator(X_train, y_train)
-        #self.generator_train.initialize()
-        self.generator_val = data.Generator(X_test, y_test)
+    def load_generators(self):
+        self.generator = data.Generator()
+        self.generator.load_preprocessed_data()
+        train_generator, val_generator = self.generator.get_train_val_generators()
+        self.train_generator = train_generator
+        self.val_generator = val_generator
         #self.generator_val.initialize()
 
     def build(self):
@@ -71,6 +72,7 @@ class Network():
     def load_embeddings(self):
         self.word_to_index = joblib.load(settings.WORD_TO_INDEX_PATH)
         self.embedding_weights = joblib.load(settings.EMBEDDING_WEIGHTS_PATH)
+        settings.logger.info("Weight embedding matrix loaded "+str(self.embedding_weights.shape))
             
     def compile(self):
         self.model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
@@ -87,7 +89,7 @@ class Network():
         
         #Add callbacks
         callbacks_list = []
-        checkpoint = ModelCheckpoint(settings.WEIGHTS_PATH, monitor='loss', save_best_only=True, mode='min')
+        checkpoint = ModelCheckpoint(settings.WEIGHTS_PATH, monitor='val_loss', save_best_only=True, mode='min')
         callbacks_list.append(checkpoint)
         
         tf_logs = TensorBoard(
@@ -98,10 +100,10 @@ class Network():
         
         #Fit the model
         self.model.fit_generator(
-                            generator = self.generator_train.generate(),
+                            generator = self.train_generator,
                             steps_per_epoch=settings.STEPS_PER_EPOCH,
                             epochs=settings.EPOCHS,
-                            validation_data=self.generator_train.generate(),
+                            validation_data=self.val_generator,
                             validation_steps=settings.STEPS_VAL,
                             workers=1,
                             callbacks=callbacks_list)

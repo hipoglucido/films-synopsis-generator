@@ -12,7 +12,6 @@ import re
 from sklearn.preprocessing import MultiLabelBinarizer
 from collections import defaultdict
 from sklearn.externals import joblib
-from keras.preprocessing import sequence
 
 
 class Preprocessor():
@@ -30,10 +29,7 @@ class Preprocessor():
         self.encoded_genres = None
         self.synopses = None
 
-    def load_indexes(self):
-        self.word_to_index = joblib.load(os.path.join(settings.OTHERS_DIR, 'word_to_index_50000.pkl'))
-        self.index_to_word = joblib.load(os.path.join(settings.OTHERS_DIR, 'index_to_word_50000.pkl'))
-        settings.logger.info("Loaded index dictionaries")
+
     
     def build_indexes(self):
         settings.logger.info("Building word indexes")
@@ -52,67 +48,72 @@ class Preprocessor():
     def preprocess_synopses(self, df):
         settings.logger.info("Preprocessing synopses...")
         #Keep the synopsis as a list
-        
-        self.synopses = list(df['Synopsis'].map(self.tokenize).values)
+        self.synopses = df['Synopsis'].map(self.clean_text)
 
-        self.synopses = [self.clean_text(synopsis) for synopsis in self.synopses]
+    
+        self.synopses = self.synopses.map(self.tokenize)
         
+
+        self.synopses = list(self.synopses.values)
+         
         from collections import defaultdict
             
         word_freqs = defaultdict(int)
         for synopsis in self.synopses:
-            for word in synopsis.split():
+            for word in synopsis:
                 word_freqs[word] += 1
                 
         word_freqs = list(word_freqs.items())
         most_frequent = sorted(word_freqs, key = lambda x: x[1], reverse = True)
         settings.logger.info("Most frequent words: " + str(most_frequent[:10]))
         
-        self.vocabulary = [w[0] for w in most_frequent][:settings.VOCABULARY_SIZE]
+        self.vocabulary = [w[0] for w in most_frequent][:settings.VOCABULARY_SIZE-1]
+        if settings.EOS_TOKEN not in self.vocabulary:
+            self.vocabulary[-1] = settings.EOS_TOKEN
         settings.logger.info("Only "+str(len(self.vocabulary))+" words will be considered (VOCABULARY_SIZE)")
-        
-        #Substitute any unkown word with <unk>
-        count = 0           # You don't use this variable for anything. The rest of 'count' variables are inside the function.
-        total = len(self.synopses)
-        def map_unkown_tokens(synopsis):
+
+        #Substitute any unkown word with <unk>variables are inside the function.
+        self.count = 0
+        self.total = len(self.synopses)
+        def map_unkown_tokens(obj, synopsis):
             new_synopsis = []
-            for word in synopsis.split():
+            for word in synopsis:
                 if word in self.vocabulary:
                     new_synopsis.append(word)
                 else:
                     new_synopsis.append(settings.UNKNOWN_TOKEN)
-            count += 1
-            if count % 150 == 0:
-                settings.logger.info(str(count/total)[:4]+"% comleted...")
+            obj.count += 1
+            if obj.count % 100 == 0:
+                settings.logger.info(str(100*obj.count/obj.total)[:4]+'% completed...')
             return new_synopsis
+        self.vocabulary[-2] = settings.UNKNOWN_TOKEN    
         settings.logger.info("Mapping unkown tokens...")
         #self.synopses = [map_unkown_tokens(synopsis) for synopsis in self.synopses]
-        #self.synopses = pd.Series(self.synopses).map(map_unkown_tokens)
+        self.synopses = list(pd.Series(self.synopses).map(lambda x: map_unkown_tokens(self,x)))
+        self.synopses.append(settings.UNKNOWN_TOKEN)
 
     ''' Receives a string.
        Returns that same string after being preprocessed.'''
 
     def clean_text(self, text):
-
         # Handle (...)
+        #text = 'asdas 9999 asdasdsd , hola... ! 787 8 '
         text_in_paren = re.findall("\([^\)]*\)", text)
         if text_in_paren:
             for del_text in text_in_paren:
                 text = text.replace(del_text, '')
-
         # Handle digits
         digits = re.findall(r'\d+', text)
         if digits:
             for digit in digits:
                 text = text.replace(digit, 'DIGITO')
-
         # Remove puntuaction
         # text = "".join(c for c in text if c not in ('¡','!','¿','?', ':', ';'))
-        text = re.sub(r'[^a-zA-Z\.]', '', text)
-
+        #text = re.sub(r'[^a-zA-Z\.]', ' ', text)
         # Remove extra spaces that were left when cleaning
         text = re.sub(r'\s+', ' ', text)
-
+        
+        text = text.lower()
         return text
         
     def filter_dataset(self):
@@ -132,12 +133,12 @@ class Preprocessor():
             filtered_synopses.append(synopsis)
         self.genres = filtered_genres
         self.synopses = filtered_synopses    
-        print(self.genres)
+     
         #settings.logger.info("Total tokens in corpus after preprocessing : "+str(corpus_tokens_count))
         
     def save_data(self):
         assert len(self.genres) == len(self.synopses)
-        films_preprocessed = [self.encoded_genres, self.synopses]
+        films_preprocessed = [self.encoded_genres, self.encoded_synopses]
         filepath = os.path.join(settings.DATA_DIR,str(len(films_preprocessed[0]))+"_preprocessed_films.pkl")
         #print(films_preprocessed)
         joblib.dump(films_preprocessed, filepath)
@@ -176,7 +177,7 @@ class Preprocessor():
     def generate_embedding_weights(self):        
         settings.logger.info('Loading Word2Vec model from '+settings.WORD2VEC_MODEL_PATH)
         if settings.USE_SMALL_WORD2VEC:
-            nrows = None
+            nrows = 100000
         else:
             nrows = None
         model = pd.read_csv(settings.WORD2VEC_MODEL_PATH, sep = ' ', header = None, \
@@ -190,11 +191,11 @@ class Preprocessor():
             try:
                 embedding_weights[index,:] = model.loc[word].values
             except KeyError:
-                print(self.index_to_word[index],word)
+                settings.logger.warning(self.index_to_word[index]+' ('+word+') not found in word2vec')
                 count += 1
-        embedding_weights[embedding_rows-1, :] = settings.EOS_TOKEN
-        settings.logger.info(str(count)+" tokens represented with zeros in the weight matrix")
-        print(embedding_weights.shape)
+
+        #embedding_weights[embedding_rows-1, :] = settings.EOS_TOKEN
+        settings.logger.info(str(count)+" tokens represented with zeros in the weight matrix "+str(embedding_weights.shape))
 
         joblib.dump(embedding_weights, settings.EMBEDDING_WEIGHTS_PATH)
         settings.logger.info("Saved weights matrix in "+settings.EMBEDDING_WEIGHTS_PATH)
@@ -231,36 +232,61 @@ class Preprocessor():
         settings.logger.info(filepath+' saved')
         
         
-    def load_genre_binarizer(self):
-        filepath = settings.GENRE_BINARIZER_PATH
-        self.mlb = joblib.load(filepath)
-        settings.logger.info(filepath+' loaded')
+
         
     def tokenize(self,s):
         """
         Tokenize the synopsis, example:
-        'HOLAA!! ¿Qué tal estás?'  -> 'holaa ! ! ¿ qué tal estás ?<eos>'
+        'HOLAA!! ¿Qué tal estaás?'  -> 'holaa ! ! ¿ qué tal estás ?<eos>'
         """
-        return ' '.join(re.findall(r"[\w]+|[^\s\w]", s)).lower() + ' '+settings.EOS_TOKEN
+        return re.findall(r"[\w]+|[^\s\w]", s) + [settings.EOS_TOKEN]
 
 
 class Generator():
     def __init__(self):
         self.synopses = None
         self.genres = None
+    def get_train_val_generators(self):
+        print(999999,X_test.shape, X_train.shape)
+        X_train, X_test, y_train, y_test = train_test_split(
+            self.synopses, self.genres, test_size = settings.VALIDATION_SPLIT, random_seed = 42)
+        generator_train = self.generate(X_train, y_train)
+        #self.generator_train.initialize()
+        generator_val = self.generate(X_test, y_test)
+        return generator_train, generator_val
+    def load_indexes(self):
+        self.word_to_index = joblib.load(os.path.join(settings.WORD_TO_INDEX_PATH))
+        self.index_to_word = joblib.load(os.path.join(settings.INDEX_TO_WORD_PATH))
+        settings.logger.info("Loaded index dictionaries")    
+    def load_genre_binarizer(self):
+        filepath = settings.GENRE_BINARIZER_PATH
+        self.mlb = joblib.load(filepath)
+        settings.logger.info(filepath+' loaded')
+    def load_preprocessed_data(self):
+        """
+        Loads preprocessed lists of synopses and genres
+        """
+        films_preprocessed = joblib.load(settings.INPUT_PREPROCESSED_FILMS)
 
+        self.synopses = films_preprocessed[1]
+        self.genres = films_preprocessed[0]
+        settings.logger.info("Loaded preprocessed films from "+str(settings.INPUT_PREPROCESSED_FILMS))
+        settings.logger.info(self.synopses[0][:10])    
+        settings.logger.info(self.genres[0])    
     def to_genre(self, vector):
         """
         [0,0,1,0,1...] -> 'drama|comedia'
         """
+        
         return '|'.join(self.mlb.inverse_transform(vector[None, :])[0])
 
-    def to_synopsis(self, vectors):
+
+    def to_synopsis(self, vector):
         """
         Converts a vector of words (i.e. a vector of vector) into its
         text representation
         """
-        return ' '.join([self.index_to_word[i] for i in vectors if i != 0])
+        return ' '.join([self.index_to_word[i] for i in vector])
 
     def get_train_val_generators(self):
 
@@ -268,17 +294,18 @@ class Generator():
         # print(self.genres)
         pass
 
-    def generate(self):
+    def generate(self, synopses, genres):
         """
         Generate batches to feed the network.
         Batches are comprised of ((genre, previous_words), next_words))
         """
+        #from keras.preprocessing import sequence
         # Initialize batch variables
         previous_words_batch = []
         next_word_batch = []
         genres_batch = []
 
-        settings.logger.info("Generating data...")
+        settings.logger.info("Generating data...  ")
 
         # Keep track of how many batches have been fed
         batches_fed_count = 0
@@ -288,21 +315,19 @@ class Generator():
             synopsis_counter = -1
             # Iterate over all the synopsis
 
-            for synopsis in self.synopses:
+            for synopsis in synopses:
                 synopsis_counter += 1
-                genre = self.genres[synopsis_counter]
+                genre = genres[synopsis_counter]
                 # Itearte over synopsis' words
-                splitted_synopsis = synopsis.split()
+                
 
-                for i in range(len(splitted_synopsis) - 1):
+                for i in range(len(synopsis) - 1):
                     # Grab next word and add it to the current batch
-                    next_word = synopsis.split()[i + 1]
-                    next = np.zeros(settings.VOCABULARY_SIZE)
-                    next[self.word_to_index[next_word]] = 1
-                    next_word_batch.append(next)
+                    next_word = synopsis[i + 1]
+                    next_word_batch.append(next_word)
 
                     # Grab previous words and add them to the current batch
-                    previous_words = [self.word_to_index[word] for word in splitted_synopsis[:i + 1]]
+                    previous_words = [word for word in synopsis[:i + 1]]
                     previous_words_batch.append(previous_words)
 
                     # Add the genre to the batch
@@ -319,10 +344,13 @@ class Generator():
                     genres_batch = np.asarray(genres_batch)
 
                     # Padd previous words of synopses
-                    previous_words_batch = sequence.pad_sequences(previous_words_batch,
+                    '''
+                    #previous_words_batch = sequence.pad_sequences(previous_words_batch,
                                                                   maxlen=settings.MAX_SYNOPSIS_LEN, padding='post')
+                    '''
                     # print(len(genres_batch),genres_batch[0].shape,previous_words_batch.shape,next_word_batch.shape)
                     # print(next_word_batch.mean())
+                    '''
                     if 0:
                         for j in range(settings.batch_size):
                             print(str(self.to_genre(genres_batch[j])).encode('latin1'))
@@ -330,6 +358,7 @@ class Generator():
                             print(str(self.to_synopsis(np.nonzero(next_word_batch[j])[0])).encode('latin1'))
                             print("************")
                         print("____________________________________________")
+                    '''
                     # Yield batch
                     yield [[genres_batch, previous_words_batch], next_word_batch]
                     batches_fed_count += 1
