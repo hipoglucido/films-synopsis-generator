@@ -47,8 +47,8 @@ class Network():
         synopsis_model.add(Embedding(input_dim = settings.VOCABULARY_SIZE + 1,
                                 output_dim = settings.EMBEDDING_DIM,
                                 weights = [self.embedding_weights],
-                                input_length=settings.MAX_SYNOPSIS_LEN),
-                                trainable = False)
+                                input_length=settings.MAX_SYNOPSIS_LEN,
+                                trainable = False))
         synopsis_model.add(LSTM(units = settings.EMBEDDING_DIM,
                             return_sequences=True))
         synopsis_model.add(TimeDistributed(Dense(settings.EMBEDDING_DIM)))
@@ -79,7 +79,6 @@ class Network():
         """
         Train the model.
         """
-        assert self.generator is not None
 
         weights_name = 'LSTM_weights-{epoch:03d}-tloss{loss:.4f}.hdf5'
         file_name = os.path.join(settings.WEIGHTS_DIR)

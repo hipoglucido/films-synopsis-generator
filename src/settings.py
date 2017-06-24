@@ -39,7 +39,7 @@ STEPS_VAL = 1
 
 ## PREPROCESSING
 MAX_SYNOPSIS_LEN = 200
-VOCABULARY_SIZE = 10000 #None will use the whole corpus vocabulary (151852)
+VOCABULARY_SIZE = 50000 #None will use the whole corpus vocabulary (151852)
 MAX_GENERES = 25
 EOS_TOKEN = '<eos>'
 UNKNOWN_TOKEN = '<unk>'

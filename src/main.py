@@ -63,10 +63,15 @@ def check_nltk_resources():
 
 def train_network():
 
+    synopses, genres = load_preprocessed_data(settings.INPUT_PREPROCESSED_FILMS)
+    X_train, X_val, y_train, y_val = train_test_split(
+        synopses, genres, test_size=settings.VALIDATION_SPLIT)
+
     network = model.Network()
-    network.load_generators()       # Synopses and genres as parameter
+    network.load_generators(X_train, X_val, y_train, y_val)       # Synopses and genres as parameter
+    network.load_embeddings()
     network.build()
-    network.load_weights()
+    #network.load_weights()
     network.compile()
     network.train()
 
@@ -87,5 +92,5 @@ if __name__ == '__main__':
     check_nltk_resources()
     check_paths()
     #generate_files()
-    test_generator()
-    #train_network()
+    #test_generator()
+    train_network()
