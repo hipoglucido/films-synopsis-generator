@@ -9,7 +9,7 @@ import re
 from sklearn.preprocessing import MultiLabelBinarizer
 from collections import defaultdict
 from sklearn.externals import joblib
-from nltk.tag import pos_tag
+#from nltk.tag import pos_tag
 from time import strftime
 
 class Preprocessor():
@@ -47,7 +47,7 @@ class Preprocessor():
         settings.logger.info("Preprocessing synopses...")
 
         #Keep the synopsis as a list
-        self.synopses = df['Synopsis'][:1000].map(self.clean_text)
+        self.synopses = df['Synopsis'].map(self.clean_text)
 
         settings.logger.info("Tokenizing synopses...")
         self.synopses = self.synopses.map(self.tokenize)
@@ -65,8 +65,8 @@ class Preprocessor():
         word_freqs = list(word_freqs.items())
         most_frequent = sorted(word_freqs, key = lambda x: x[1], reverse = True)
         settings.logger.info("Most frequent words: " + str(most_frequent[:10]))
-        
         self.vocabulary = [w[0] for w in most_frequent][:settings.VOCABULARY_SIZE]
+
         self.vocabulary[-1] = settings.UNKNOWN_TOKEN
         self.vocabulary[-2] = settings.PAD_TOKEN
         if settings.EOS_TOKEN not in self.vocabulary:
@@ -111,7 +111,7 @@ class Preprocessor():
         text = re.sub(r'[^a-zA-Z\.áéíóúÁÉÍÓÚüÜñÑ]', ' ', text)
         # Remove extra spaces that were left when cleaning
         text = re.sub(r'\s+', ' ', text)
-        
+        '''
         #text = text.lower()
         text_tags = pos_tag(text.split())
         final = ""
@@ -123,7 +123,8 @@ class Preprocessor():
         self.count +=1
         if self.count % 1000 == 0:
             settings.logger.info(self.count)
-        return final
+        '''
+        return text
         
     def filter_dataset(self):
         """
@@ -175,7 +176,7 @@ class Preprocessor():
     def load_dataset(self):
         import pandas as pd
         if settings.USE_SMALL_DATASET:
-            nrows = 5000
+            nrows = 4000
         else:
             nrows = None
         df = pd.read_csv(filepath_or_buffer  = os.path.join(settings.DATA_DIR,'synopsis_genres.csv'),sep = '#',encoding = 'latin_1',index_col = 'ID', nrows = nrows)

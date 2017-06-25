@@ -7,7 +7,7 @@ from sklearn.externals import joblib
 import pickle as pk
 import numpy as np
 from sklearn.model_selection import train_test_split
-import nltk
+
 
 def test_generator():
 
@@ -25,6 +25,8 @@ def test_generator():
 
     while 1:
         for a,b in c.generate():
+            print(a[0].shape,a[1].shape,b.shape)
+            continue
             for i in range(a[0].shape[0]):
                 s = str(c.to_synopsis(a[1][i]))
                 if len(s) > 100:
@@ -95,7 +97,7 @@ def load_preprocessed_data(path):
 
 
 if __name__ == '__main__':
-    check_nltk_resources()
+    #check_nltk_resources()
     check_paths()
     #generate_files()
     #test_generator()
