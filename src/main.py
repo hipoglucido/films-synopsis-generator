@@ -95,5 +95,5 @@ if __name__ == '__main__':
     #check_nltk_resources()
     check_paths()
     #generate_files()
-    test_generator()
-    #train_network()
+    #test_generator()
+    train_network()

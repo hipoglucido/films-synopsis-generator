@@ -77,7 +77,9 @@ class Generator():
                 synopsis_counter += 1
                 genre = self.genres[synopsis_counter]
                 # Itearte over synopsis' words
-
+                if len(synopsis) > settings.MAX_SYNOPSIS_LEN:
+                    synopsis = synopsis[:settings.MAX_SYNOPSIS_LEN]
+                    synopsis[-1] = self.word_to_index[settings.EOS_TOKEN]
 
                 for i in range(len(synopsis) - 1):
                     # Grab next word and add it to the current batch
@@ -87,7 +89,7 @@ class Generator():
 
                     # Grab previous words and add them to the current batch
                     previous_words = [word for word in synopsis[:i + 1]]
-                    print(9999,len(previous_words))
+                    #print(9999,len(previous_words))
                     pad_units = settings.MAX_SYNOPSIS_LEN - len(previous_words)
                     padding = [self.word_to_index[settings.PAD_TOKEN] for i in range(pad_units)]
                     previous_words.extend(padding)
@@ -124,14 +126,9 @@ class Generator():
                             print("************")
                         print("____________________________________________")
                     '''
-                    #
-                    if previous_words_batch.shape == (settings.BATCH_SIZE, settings.MAX_SYNOPSIS_LEN):
-                    # Yield batch
-                        yield ([genres_batch, previous_words_batch], next_word_batch)
-                        batches_fed_count += 1
-                    else:
-                        print(genres_batch.shape, previous_words_batch.shape, next_word_batch.shape)
-                        assert False
+                    yield ([genres_batch, previous_words_batch], next_word_batch)
+                    batches_fed_count += 1
+                    
                     # settings.logger.info("Batches yielded: "+str(batches_fed_count))
 
                     # Reset variables

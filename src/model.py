@@ -82,12 +82,12 @@ class Network():
         Train the model.
         """
 
-        weights_name = 'LSTM_weights-{epoch:03d}-tloss{loss:.4f}.hdf5'
-        file_name = os.path.join(settings.WEIGHTS_DIR)
+        weights_name = 'LSTM_150_weights-{epoch:03d}-tloss{loss:.4f}-vloss{val_loss:.4f}.hdf5'
+        file_path = os.path.join(settings.WEIGHTS_DIR,weights_name)
         
         #Add callbacks
         callbacks_list = []
-        checkpoint = ModelCheckpoint(settings.WEIGHTS_PATH, monitor='val_loss', save_best_only=True, mode='min')
+        checkpoint = ModelCheckpoint(file_path, monitor='val_loss', save_best_only=False, mode='auto')
         callbacks_list.append(checkpoint)
         
         tf_logs = TensorBoard(

@@ -9,7 +9,7 @@ import re
 from sklearn.preprocessing import MultiLabelBinarizer
 from collections import defaultdict
 from sklearn.externals import joblib
-from nltk.tag import pos_tag
+#from nltk.tag import pos_tag
 from time import strftime
 
 class Preprocessor():
@@ -237,4 +237,24 @@ class Preprocessor():
         
         settings.logger.info("Only "+str(len(knwown_genres))+" genres will be considered (MAX_GENERES)")
         
-        de
+        def delete_unkown_genres(fgenres):
+            return [genre for genre in fgenres if genre in knwown_genres]
+            
+        self.genres = [delete_unkown_genres(fgenres) for fgenres in self.genres]      
+        
+        self.mlb = MultiLabelBinarizer()
+        self.mlb.fit(self.genres)
+        #settings.logger.info(str(len(self.mlb.classes_))+" different genres found:"+str(self.mlb.classes_)[:100]+"...")
+        #I am not sure when to use .encode('latin1')        
+        filepath = os.path.join(settings.OTHERS_DIR, strftime("%Y%m%dT%H%M%S")+'_genre_binarizer_'+str(len(self.mlb.classes_))+'_classes.pkl')
+        joblib.dump(self.mlb, filepath)
+        settings.logger.info(filepath+' saved')
+
+        
+    def tokenize(self,s):
+        """
+        Tokenize the synopsis, example:
+        'HOLAA!! ¿Qué tal estaás?'  -> 'holaa ! ! ¿ qué tal estás ?<eos>'
+        """
+        return re.findall(r"[\w]+|[^\s\w]", s) + [settings.EOS_TOKEN]
+
