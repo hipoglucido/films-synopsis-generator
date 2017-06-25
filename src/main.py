@@ -1,5 +1,6 @@
 import os
-import data
+import preprocessor
+import generator
 import settings
 import model
 from sklearn.externals import joblib
@@ -32,17 +33,17 @@ def test_generator():
             
 def generate_files():
 
-    preprocessor = data.Preprocessor()
-    df = preprocessor.load_dataset()
+    p = preprocessor.Preprocessor()
+    df = p.load_dataset()
     
-    preprocessor.preprocess_synopses(df)
-    preprocessor.preprocess_genres(df)
-    preprocessor.build_indexes()
-    preprocessor.generate_embedding_weights()
-    preprocessor.filter_dataset()
-    preprocessor.encode_genres()
-    preprocessor.encode_synopses()
-    preprocessor.save_data()
+    p.preprocess_synopses(df)
+    p.preprocess_genres(df)
+    p.build_indexes()
+    p.generate_embedding_weights()
+    p.filter_dataset()
+    p.encode_genres()
+    p.encode_synopses()
+    p.save_data()
 
 def check_paths():
     if not os.path.exists(settings.DATA_DIR):
@@ -91,6 +92,6 @@ def load_preprocessed_data(path):
 if __name__ == '__main__':
     check_nltk_resources()
     check_paths()
-    #generate_files()
+    generate_files()
     #test_generator()
-    train_network()
+    #train_network()

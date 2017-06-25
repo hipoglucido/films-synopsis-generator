@@ -2,7 +2,7 @@
 Training
 """
 import settings
-import data
+import generator
 
 import os
 import numpy as np
@@ -27,8 +27,8 @@ class Network():
         self.generator_val = None
 
     def load_generators(self, X_train, X_val, y_train, y_val):
-        self.train_generator = data.Generator(X_train,y_train)
-        self.val_generator = data.Generator(X_val, y_val)
+        self.train_generator = generator.Generator(X_train,y_train)
+        self.val_generator = generator.Generator(X_val, y_val)
         #self.generator_val.initialize()
 
     def build(self):
