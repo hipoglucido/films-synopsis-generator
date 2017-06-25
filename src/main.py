@@ -7,7 +7,8 @@ from sklearn.externals import joblib
 import pickle as pk
 import numpy as np
 from sklearn.model_selection import train_test_split
-
+import random
+from keras.preprocessing import sequence
 
 def test_generator():
 
@@ -94,11 +95,93 @@ def load_preprocessed_data(path):
     synopses = films_preprocessed[1]
     settings.logger.info("Loaded preprocessed films from " + str(path))
     return synopses, genres
+    
+def get_predictions_greedy(g, n, encoded_genres):
+    print("Greedy search mode")
+    start_word = random.sample(['la','el','en','durante','cuando','son','las','eran'], 1)[0]
+    previous_words = [g.word_to_index[start_word]]
+    for i in range(50):
+        padded_previous_words = sequence.pad_sequences([previous_words], maxlen=settings.MAX_SYNOPSIS_LEN, padding='post', value = g.word_to_index[settings.PAD_TOKEN])
+        next_word_probs = n.model.predict([encoded_genres,padded_previous_words])[0]
+        sorted_words = np.argsort(next_word_probs)
+        best_word = sorted_words[-1]
+        previous_words.append(best_word)
+        #print(g.to_synopsis(previous_words))
+        #print(next_word_probs)
+        #print(next_word_probs.sum())
+        #print(previous_words.shape)
+        #print(encoded_genres.shape)
+    previous_words = g.to_synopsis(previous_words)
+    return previous_words
+    
+def get_predictions_beam(g, n, encoded_genres):
+    try:
+        beam_size = int(input("Introduce an integer for the beamsize: "))
+    except:
+        get_predictions_beam(g, n, encoded_genres)
+    #def generate_synopses(model, genres, beam_size):
+    beam_size = 2
+    model = n.model
+    start = [g.word_to_index['la']]
+    synopses = [[start,0.0]]
+    while(len(synopses[0][0]) < 150):
+        temp_synopses = []
+        for synopsis in synopses:
+            
+            partial_synopsis = sequence.pad_sequences([synopsis[0]], maxlen=settings.MAX_SYNOPSIS_LEN, padding='post', value = g.word_to_index[settings.PAD_TOKEN])
+            next_words_pred = model.predict([encoded_genres, np.asarray(partial_synopsis)])[0]
+            next_words = np.argsort(next_words_pred)[-beam_size:]
+            for word in next_words:
+                new_partial_synopsis, new_partial_synopsis_prob = synopsis[0][:], synopsis[1]
+                new_partial_synopsis.append(word)
+                new_partial_synopsis_prob+=next_words_pred[word]
+                temp_synopses.append([new_partial_synopsis,new_partial_synopsis_prob])
+        synopses = temp_synopses
+        synopses.sort(key = lambda l:l[1])
+        synopses = synopses[-beam_size:]
+    synopses = [g.to_synopsis(s[0]) for s in synopses]
+    return synopses
 
+def get_predictions(g, n):
+    possible_genres = list(g.mlb.classes_)
+    print("Possible film genres: ",','.join(possible_genres)) 
+    input_line = input("Insert a comma separated set of genres (r for random): ")
+    randomly = input_line == 'r'
+    if randomly:
+        n_genres = random.randint(1,7)
+        input_genres = random.sample(possible_genres, n_genres)
+    else:
+        input_genres = input_line.split(',')
+        for ig in input_genres:
+            if ig not in possible_genres:
+                print(ig + " is not a possible genre")
+                get_predictions(g, n)
+    print("Input genres: ",', '.join(input_genres))
+    encoded_genres = g.mlb.transform([input_genres])
+    mode = input("Input g or b for greedy or beam search mode: ")
+    if mode == 'g':
+        syn = [get_predictions_greedy(g, n, encoded_genres)]
+    else:
+        syn = get_predictions_beam(g, n, encoded_genres)
+    for s in syn:
+        print("Synopsis: ",s)
+    get_predictions(g, n)
+    
+def interface():
+    settings.logger.info("Starting user interface...")
+    n = model.Network()
+    n.load_embeddings()
+    n.build()
+    n.load_weights()
+    g = generator.Generator(None, None)
+    g.load_indexes()
+    g.load_genre_binarizer()
+    get_predictions(g, n)
 
 if __name__ == '__main__':
     #check_nltk_resources()
-    check_paths()
+    #check_paths()
     #generate_files()
     #test_generator()
-    train_network()
+    #train_network()
+    interface()

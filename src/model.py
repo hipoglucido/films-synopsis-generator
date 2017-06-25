@@ -82,7 +82,7 @@ class Network():
         Train the model.
         """
 
-        weights_name = 'LSTM_150_weights-{epoch:03d}-tloss{loss:.4f}-vloss{val_loss:.4f}.hdf5'
+        weights_name = 'LSTM_weights-{epoch:03d}-tloss{loss:.4f}-vloss{val_loss:.4f}.hdf5'
         file_path = os.path.join(settings.WEIGHTS_DIR,weights_name)
         
         #Add callbacks
