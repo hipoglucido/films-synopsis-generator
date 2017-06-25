@@ -7,14 +7,14 @@ from sklearn.externals import joblib
 import pickle as pk
 import numpy as np
 from sklearn.model_selection import train_test_split
-import nltk
+
 
 def test_generator():
 
     synopses, genres = load_preprocessed_data(settings.INPUT_PREPROCESSED_FILMS)
     X_train, X_val, y_train, y_val = train_test_split(
         synopses, genres, test_size=settings.VALIDATION_SPLIT)
-    c= data.Generator(X_train, y_train)
+    c= generator.Generator(X_train, y_train)
     c.load_genre_binarizer()
     c.load_indexes()
     #a = g.generate().__next__()
@@ -24,6 +24,8 @@ def test_generator():
 
     while 1:
         for a,b in c.generate():
+            print(a[0].shape,a[1].shape,b.shape)
+            continue
             for i in range(a[0].shape[0]):
                 print(c.to_genre(a[0][i]),a[0][i].shape)
                 print(c.to_synopsis(a[1][i]),len(a[1][i]),type(a[1][i][0]))
@@ -90,8 +92,8 @@ def load_preprocessed_data(path):
 
 
 if __name__ == '__main__':
-    check_nltk_resources()
+    #check_nltk_resources()
     check_paths()
     #generate_files()
-    #test_generator()
-    train_network()
+    test_generator()
+    #train_network()

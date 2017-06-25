@@ -9,7 +9,7 @@ import re
 from sklearn.preprocessing import MultiLabelBinarizer
 from collections import defaultdict
 from sklearn.externals import joblib
-from nltk.tag import pos_tag
+
 from time import strftime
 
 
@@ -25,7 +25,7 @@ class Generator():
     #     generator_train = self.generate(X_train, y_train)
     #     #self.generator_train.initialize()
     #     generator_val = self.generate(X_test, y_test)
-    #     return generator_train, generator_val
+    #     return generator_train, generator_vala
 
     def load_indexes(self):
         self.word_to_index = joblib.load(os.path.join(settings.WORD_TO_INDEX_PATH))
@@ -87,6 +87,7 @@ class Generator():
 
                     # Grab previous words and add them to the current batch
                     previous_words = [word for word in synopsis[:i + 1]]
+                    print(9999,len(previous_words))
                     pad_units = settings.MAX_SYNOPSIS_LEN - len(previous_words)
                     padding = [self.word_to_index[settings.PAD_TOKEN] for i in range(pad_units)]
                     previous_words.extend(padding)
@@ -123,9 +124,14 @@ class Generator():
                             print("************")
                         print("____________________________________________")
                     '''
+                    #
+                    if previous_words_batch.shape == (settings.BATCH_SIZE, settings.MAX_SYNOPSIS_LEN):
                     # Yield batch
-                    yield ([genres_batch, previous_words_batch], next_word_batch)
-                    batches_fed_count += 1
+                        yield ([genres_batch, previous_words_batch], next_word_batch)
+                        batches_fed_count += 1
+                    else:
+                        print(genres_batch.shape, previous_words_batch.shape, next_word_batch.shape)
+                        assert False
                     # settings.logger.info("Batches yielded: "+str(batches_fed_count))
 
                     # Reset variables
