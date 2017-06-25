@@ -47,7 +47,7 @@ class Preprocessor():
         settings.logger.info("Preprocessing synopses...")
 
         #Keep the synopsis as a list
-        self.synopses = df['Synopsis'].map(self.clean_text)
+        self.synopses = df['Synopsis'][:1000].map(self.clean_text)
 
         settings.logger.info("Tokenizing synopses...")
         self.synopses = self.synopses.map(self.tokenize)
@@ -68,8 +68,9 @@ class Preprocessor():
         
         self.vocabulary = [w[0] for w in most_frequent][:settings.VOCABULARY_SIZE]
         self.vocabulary[-1] = settings.UNKNOWN_TOKEN
+        self.vocabulary[-2] = settings.PAD_TOKEN
         if settings.EOS_TOKEN not in self.vocabulary:
-            self.vocabulary[-2] = settings.EOS_TOKEN
+            self.vocabulary[-3] = settings.EOS_TOKEN
         settings.logger.info("Only "+str(len(self.vocabulary))+" words will be considered (VOCABULARY_SIZE)")
 
         #Substitute any unkown word with <unk> token inside the function.

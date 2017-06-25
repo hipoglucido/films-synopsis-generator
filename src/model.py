@@ -28,7 +28,9 @@ class Network():
 
     def load_generators(self, X_train, X_val, y_train, y_val):
         self.train_generator = generator.Generator(X_train,y_train)
+        self.train_generator.load_indexes()
         self.val_generator = generator.Generator(X_val, y_val)
+        self.val_generator.load_indexes()
         #self.generator_val.initialize()
 
     def build(self):
@@ -96,10 +98,10 @@ class Network():
         
         #Fit the model
         self.model.fit_generator(
-                            generator = self.train_generator,
+                            generator = self.train_generator.generate(),
                             steps_per_epoch=settings.STEPS_PER_EPOCH,
                             epochs=settings.EPOCHS,
-                            validation_data=self.val_generator,
+                            validation_data=self.val_generator.generate(),
                             validation_steps=settings.STEPS_VAL,
                             workers=1,
                             callbacks=callbacks_list)

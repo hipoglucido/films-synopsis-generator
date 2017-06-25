@@ -12,6 +12,7 @@ from sklearn.externals import joblib
 from nltk.tag import pos_tag
 from time import strftime
 
+
 class Generator():
     def __init__(self, synopses, genres):
         self.synopses = synopses
@@ -34,27 +35,14 @@ class Generator():
     def load_genre_binarizer(self):
         filepath = settings.GENRE_BINARIZER_PATH
         self.mlb = joblib.load(filepath)
-        settings.logger.info(filepath+' loaded')
-
-    # def load_preprocessed_data(self):
-    #     """
-    #     Loads preprocessed lists of synopses and genres
-    #     """
-    #     films_preprocessed = joblib.load(settings.INPUT_PREPROCESSED_FILMS)
-    #
-    #     self.synopses = films_preprocessed[1]
-    #     self.genres = films_preprocessed[0]
-    #     settings.logger.info("Loaded preprocessed films from "+str(settings.INPUT_PREPROCESSED_FILMS))
-    #     settings.logger.info(self.synopses[0][:10])
-    #     settings.logger.info(self.genres[0])
+        settings.logger.info(filepath + ' loaded')
 
     def to_genre(self, vector):
         """
         [0,0,1,0,1...] -> 'drama|comedia'
         """
-        
-        return '|'.join(self.mlb.inverse_transform(vector[None, :])[0])
 
+        return '|'.join(self.mlb.inverse_transform(vector[None, :])[0])
 
     def to_synopsis(self, vector):
         """
@@ -68,7 +56,7 @@ class Generator():
         Generate batches to feed the network.
         Batches are comprised of ((genre, previous_words), next_words))
         """
-        #from keras.preprocessing import sequence
+        # from keras.preprocessing import sequence
         # Initialize batch variables
         previous_words_batch = []
         next_word_batch = []
@@ -89,16 +77,21 @@ class Generator():
                 synopsis_counter += 1
                 genre = self.genres[synopsis_counter]
                 # Itearte over synopsis' words
-                
+
 
                 for i in range(len(synopsis) - 1):
                     # Grab next word and add it to the current batch
-                    next_word = synopsis[i + 1]
+                    next_word = np.zeros(settings.VOCABULARY_SIZE)
+                    next_word[synopsis[i + 1]] = 1
                     next_word_batch.append(next_word)
 
                     # Grab previous words and add them to the current batch
                     previous_words = [word for word in synopsis[:i + 1]]
-                    previous_words_batch.append(previous_words)
+                    pad_units = settings.MAX_SYNOPSIS_LEN - len(previous_words)
+                    padding = [self.word_to_index[settings.PAD_TOKEN] for i in range(pad_units)]
+                    previous_words.extend(padding)
+                    next_sentence = np.asarray(previous_words)
+                    previous_words_batch.append(next_sentence)
 
                     # Add the genre to the batch
                     genres_batch.append(genre)
@@ -112,6 +105,7 @@ class Generator():
                     # Batch is ready
                     next_word_batch = np.asarray(next_word_batch)
                     genres_batch = np.asarray(genres_batch)
+                    previous_words_batch = np.asarray(previous_words_batch)
 
                     # Padd previous words of synopses
                     '''
@@ -130,7 +124,7 @@ class Generator():
                         print("____________________________________________")
                     '''
                     # Yield batch
-                    yield [[genres_batch, previous_words_batch], next_word_batch]
+                    yield ([genres_batch, previous_words_batch], next_word_batch)
                     batches_fed_count += 1
                     # settings.logger.info("Batches yielded: "+str(batches_fed_count))
 

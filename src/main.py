@@ -92,6 +92,6 @@ def load_preprocessed_data(path):
 if __name__ == '__main__':
     check_nltk_resources()
     check_paths()
-    generate_files()
+    #generate_files()
     #test_generator()
-    #train_network()
+    train_network()
