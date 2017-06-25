@@ -40,7 +40,7 @@ class Preprocessor():
             self.index_to_word[i]=word
         assert len(self.word_to_index) == len(self.index_to_word)
         joblib.dump(self.word_to_index, os.path.join(settings.OTHERS_DIR, strftime("%Y%m%dT%H%M%S")+'_word_to_index.pkl'))
-        joblib.dump(self.index_to_word, os.path.join(settings.OTHERS_DIR, strftime("%Y%m%dT%H%M%S")+'index_to_word.pkl'))
+        joblib.dump(self.index_to_word, os.path.join(settings.OTHERS_DIR, strftime("%Y%m%dT%H%M%S")+'_index_to_word.pkl'))
         settings.logger.info("Saved index dictionaries for "+str(len(self.word_to_index))+" words in "+settings.OTHERS_DIR)
         
     def preprocess_synopses(self, df):
@@ -147,7 +147,7 @@ class Preprocessor():
     def save_data(self):
         assert len(self.genres) == len(self.synopses)
         films_preprocessed = [self.encoded_genres, self.encoded_synopses]
-        filepath = os.path.join(settings.DATA_DIR,strftime("%Y%m%dT%H%M%S")+str(self.encoded_genres.shape[0])+"_preprocessed_films.pkl")
+        filepath = os.path.join(settings.DATA_DIR,strftime("%Y%m%dT%H%M%S_")+str(self.encoded_genres.shape[0])+"_preprocessed_films.pkl")
         #print(films_preprocessed)
         joblib.dump(films_preprocessed, filepath)
         settings.logger.info(str(len(self.encoded_genres))+" preprocessed films data saved to "+filepath) 
@@ -191,21 +191,29 @@ class Preprocessor():
             nrows = None
         model = pd.read_csv(settings.WORD2VEC_MODEL_PATH, sep = ' ', header = None, \
                             index_col = 0, skiprows = 1, nrows = nrows)
-        settings.logger.info('Generating embedding weights matrix...')
         embedding_rows = len(self.vocabulary) + 1 # adding 1 to account for 0th index (for masking)
+        settings.logger.info('Generating embedding weights matrix for '+str(embedding_rows)+' words...')
         embedding_weights = np.zeros((embedding_rows,settings.EMBEDDING_DIM))
         count = 0
-        for index, word in enumerate(self.vocabulary):
+        for index, word in self.index_to_word.items():
             #print(self.index_to_word[index],word)
             try:
                 embedding_weights[index,:] = model.loc[word].values
             except KeyError:
-                settings.logger.warning(self.index_to_word[index]+' ('+word+') not found in word2vec')
-                count += 1
+                try:
+                    embedding_weights[index,:] = model.loc[word.title()].values
+                    settings.logger.warning(self.index_to_word[index]+' ('+word+') will take the embedding of '+word.title())
+                except KeyError:
+                    if 'digito' in self.index_to_word[index]:
+                        embedding_weights[index,:] = model.loc[settings.DIGIT_TOKEN].values
+                        settings.logger.warning(self.index_to_word[index]+' ('+word+') will take the embedding of '+settings.DIGIT_TOKEN)
+                    else:  
+                        settings.logger.warning(self.index_to_word[index]+' ('+word+') not found in word2vec')
+                        count += 1
 
         #embedding_weights[embedding_rows-1, :] = settings.EOS_TOKEN
         settings.logger.info(str(count)+" tokens represented with zeros in the weight matrix "+str(embedding_weights.shape))
-        filepath = os.path.join(settings.OTHERS_DIR,strftime("%Y%m%dT%H%M%S")+str(embedding_weights.shape[0])+"?embedding_weights.pkl")
+        filepath = os.path.join(settings.OTHERS_DIR,strftime("%Y%m%dT%H%M%S_")+str(embedding_weights.shape[0])+"_embedding_weights.pkl")
         joblib.dump(embedding_weights, filepath)
         settings.logger.info("Saved weights matrix in "+filepath)
         

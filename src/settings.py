@@ -22,13 +22,13 @@ WEIGHTS_DIR = os.path.join(DATA_DIR, "weights")
 TENSORBOARD_LOGS_DIR = os.path.join(DATA_DIR, 'tensorboard_logs')
 
 ##FILES
-GENRE_BINARIZER_PATH = os.path.join(OTHERS_DIR, 'genre_binarizer_25_classes.pkl')
-WORD_TO_INDEX_PATH = os.path.join(OTHERS_DIR, 'word_to_index.pkl')
-INDEX_TO_WORD_PATH = os.path.join(OTHERS_DIR, 'index_to_word.pkl')
+GENRE_BINARIZER_PATH = os.path.join(OTHERS_DIR, '20170625T025208_genre_binarizer_25_classes.pkl')
+WORD_TO_INDEX_PATH = os.path.join(OTHERS_DIR, '20170625T025208_word_to_index.pkl')
+INDEX_TO_WORD_PATH = os.path.join(OTHERS_DIR, '20170625T025209_index_to_word.pkl')
 WORD2VEC_MODEL_PATH = os.path.join(OTHERS_DIR, 'SBW-vectors-300-min5.txt')
 
-INPUT_PREPROCESSED_FILMS = os.path.join(DATA_DIR,"preprocessed_films.pkl")
-EMBEDDING_WEIGHTS_PATH = os.path.join(OTHERS_DIR, 'embedding_weights.hdf')
+INPUT_PREPROCESSED_FILMS = os.path.join(DATA_DIR,"20170625T030511_4964_preprocessed_films.pkl")
+INPUT_EMBEDDING_WEIGHTS_PATH = os.path.join(OTHERS_DIR, '20170625T03050827981_embedding_weights.hdf')
 
 ## TRAINING
 BATCH_SIZE = 32
@@ -40,7 +40,7 @@ STEPS_VAL = 1
 
 ## PREPROCESSING
 MAX_SYNOPSIS_LEN = 200
-VOCABULARY_SIZE = 5000 #None will use the whole corpus vocabulary (151852)
+VOCABULARY_SIZE = 50000 #None will use the whole corpus vocabulary (151852)
 MAX_GENERES = 25
 EOS_TOKEN = '<eos>'
 UNKNOWN_TOKEN = '<unk>'
@@ -53,7 +53,7 @@ EMBEDDING_DIM = 300#128
 
 
 ## DEBUGGING
-USE_SMALL_DATASET = 1
+USE_SMALL_DATASET = 0
 USE_SMALL_WORD2VEC = 0
 PRINT_MODEL_SUMMARY = 1
 

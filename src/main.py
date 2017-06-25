@@ -12,19 +12,24 @@ import nltk
 def test_generator():
 
     synopses, genres = load_preprocessed_data(settings.INPUT_PREPROCESSED_FILMS)
+    print(synopses[:20])
+    print(genres[:20])
     X_train, X_val, y_train, y_val = train_test_split(
         synopses, genres, test_size=settings.VALIDATION_SPLIT)
-    c= data.Generator(X_train, y_train)
+    c= generator.Generator(X_train, y_train)
     c.load_genre_binarizer()
     c.load_indexes()
     #a = g.generate().__next__()
     #g.get_train_val_generators()
     from time import sleep
 
-
     while 1:
         for a,b in c.generate():
             for i in range(a[0].shape[0]):
+                s = str(c.to_synopsis(a[1][i]))
+                if len(s) > 100:
+                    print(s)
+                continue
                 print(c.to_genre(a[0][i]),a[0][i].shape)
                 print(c.to_synopsis(a[1][i]),len(a[1][i]),type(a[1][i][0]))
                 print(c.index_to_word[b[i]],type(b[i]))
@@ -90,8 +95,8 @@ def load_preprocessed_data(path):
 
 
 if __name__ == '__main__':
-    check_nltk_resources()
-    check_paths()
+    #check_nltk_resources()
+    #check_paths()
     generate_files()
     #test_generator()
     #train_network()
