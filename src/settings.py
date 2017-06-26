@@ -21,25 +21,16 @@ OTHERS_DIR = os.path.join(DATA_DIR, "others")
 WEIGHTS_DIR = os.path.join(DATA_DIR, "weights")
 TENSORBOARD_LOGS_DIR = os.path.join(DATA_DIR, 'tensorboard_logs')
 
-##FILES
-
-GENRE_BINARIZER_PATH = os.path.join(OTHERS_DIR, '20170626T023708_genre_binarizer_10_classes.pkl')
-WORD_TO_INDEX_PATH = os.path.join(OTHERS_DIR, '20170626T023708_word_to_index.pkl')
-INDEX_TO_WORD_PATH = os.path.join(OTHERS_DIR, '20170626T023708_index_to_word.pkl')
-EMBEDDING_WEIGHTS_PATH = os.path.join(OTHERS_DIR, '20170626T025245_20001_embedding_weights.pkl')
-#EMBEDDING_WEIGHTS_PATH = os.path.join(OTHERS_DIR, 'embb.pkl') 
-WORD2VEC_MODEL_PATH = os.path.join(OTHERS_DIR, 'SBW-vectors-300-min5.txt')
-INPUT_PREPROCESSED_FILMS = os.path.join(DATA_DIR,"20170626T025251_109214_preprocessed_films.pkl")
-
 
 ## TRAINING
 BATCH_SIZE = 128
 EPOCHS = 10000
-WEIGHTS_PATH = os.path.join(WEIGHTS_DIR, 'LSTM_NO_EMBEDDINGS_weights-058-tloss5.0896.hdf5')
+WEIGHTS_PATH = os.path.join(WEIGHTS_DIR, 'LSTM_w2v0_v20000_g10_w-001-tloss6.2432-vloss6.2178.hdf5')
 STEPS_PER_EPOCH = 10000
 VALIDATION_SPLIT = 0.2
 STEPS_VAL = 2000
 OPTIMIZER = 'adam'#rsmprop
+#OPTIMIZER = 'rmsprop'
 
 ## PREPROCESSING
 MAX_SYNOPSIS_LEN = 150
@@ -61,6 +52,35 @@ USE_W2V = True
 USE_SMALL_DATASET = 0
 USE_SMALL_WORD2VEC = 0
 PRINT_MODEL_SUMMARY = 1
+
+##FILES
+assert any ([MAX_GENRES == 25 and VOCABULARY_SIZE == 50000,
+             MAX_GENRES == 10 and VOCABULARY_SIZE == 20000,
+             MAX_GENRES == 8 and VOCABULARY_SIZE == 7000])
+
+if MAX_GENRES == 10:
+    GENRE_BINARIZER_PATH = os.path.join(OTHERS_DIR, '20170626T023708_genre_binarizer_10_classes.pkl')
+elif MAX_GENRES == 25:
+    GENRE_BINARIZER_PATH = os.path.join(OTHERS_DIR, '20170625T052119_genre_binarizer_25_classes.pkl')
+elif MAX_GENRES == 8:
+    GENRE_BINARIZER_PATH = os.path.join(OTHERS_DIR, '20170626T104150_genre_binarizer_8_classes.pkl')
+if VOCABULARY_SIZE == 20000:
+    WORD_TO_INDEX_PATH = os.path.join(OTHERS_DIR, '20170626T023708_20001_word_to_index.pkl')
+    INDEX_TO_WORD_PATH = os.path.join(OTHERS_DIR, '20170626T023708_20001_index_to_word.pkl')
+    EMBEDDING_WEIGHTS_PATH = os.path.join(OTHERS_DIR, '20170626T025245_20001_embedding_weights.pkl')
+    INPUT_PREPROCESSED_FILMS = os.path.join(DATA_DIR,"20170626T025251_v20000_109214_preprocessed_films.pkl")
+elif VOCABULARY_SIZE == 50000:
+    WORD_TO_INDEX_PATH = os.path.join(OTHERS_DIR, '20170625T052119_50001_word_to_index.pkl')
+    INDEX_TO_WORD_PATH = os.path.join(OTHERS_DIR, '20170625T052119_50001_index_to_word.pkl')
+    EMBEDDING_WEIGHTS_PATH = os.path.join(OTHERS_DIR, '20170625T054945_50001_embedding_weights.pkl')
+    INPUT_PREPROCESSED_FILMS = os.path.join(DATA_DIR,"20170625T054951_v50000_113347_preprocessed_films.pkl")
+elif VOCABULARY_SIZE == 7000:
+    WORD_TO_INDEX_PATH = os.path.join(OTHERS_DIR, '20170626T104150_7000_word_to_index.pkl')
+    INDEX_TO_WORD_PATH = os.path.join(OTHERS_DIR, '20170626T104150_7000_index_to_word.pkl')
+    EMBEDDING_WEIGHTS_PATH = os.path.join(OTHERS_DIR, '20170626T104824_7001_embedding_weights.pkl')
+    INPUT_PREPROCESSED_FILMS = os.path.join(DATA_DIR,"20170626T104827_v7000_104056_preprocessed_films.pkl")
+WORD2VEC_MODEL_PATH = os.path.join(OTHERS_DIR, 'SBW-vectors-300-min5.txt')
+
 
 ## LOGGING
 # create logger

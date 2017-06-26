@@ -38,7 +38,6 @@ class Network():
         
     def build(self):
         settings.logger.info("Building model...")
-        self.use_embeddings = use_embeddings
         #with tf.device("/gpu:1"):
         genres_model = Sequential()
         genres_model.add(Dense(units = settings.EMBEDDING_DIM,
@@ -90,7 +89,7 @@ class Network():
         Train the model.
         """
 
-        weights_name = 'LSTM_w2v'+str(settings.USE_W2V)+'_v'+str(settings.VOCABULARY_SIZE)+'_g'+str(settings.MAX_GENRES)+'_o-'+settings.OPTIMIZER+'_w-{epoch:03d}-tloss{loss:.4f}-vloss{val_loss:.4f}.hdf5'
+        weights_name = 'LSTM_w2v'+str(settings.USE_W2V)+'_v'+str(settings.VOCABULARY_SIZE)+'_g'+str(settings.MAX_GENRES)+'_'+settings.OPTIMIZER+'_w-{epoch:03d}-tloss{loss:.4f}-vloss{val_loss:.4f}.hdf5'
         file_path = os.path.join(settings.WEIGHTS_DIR,weights_name)
         
         #Add callbacks

@@ -99,9 +99,8 @@ def load_preprocessed_data(path):
     
 def get_predictions_greedy(g, n, encoded_genres):
     print("Greedy search mode")
-    start_word = random.sample(['la','el','en','durante','cuando','son','las','eran'], 1)[0]
-    previous_words = [g.word_to_index[start_word]]
-    for i in range(50):
+    previous_words = [g.word_to_index[sample_start()]]
+    for i in range(settings.MAX_SYNOPSIS_LEN):
         padded_previous_words = sequence.pad_sequences([previous_words], maxlen=settings.MAX_SYNOPSIS_LEN, padding='post', value = g.word_to_index[settings.PAD_TOKEN])
         next_word_probs = n.model.predict([encoded_genres,padded_previous_words])[0]
         sorted_words = np.argsort(next_word_probs)
@@ -114,16 +113,18 @@ def get_predictions_greedy(g, n, encoded_genres):
         #print(encoded_genres.shape)
     previous_words = g.to_synopsis(previous_words)
     return previous_words
-    
+def sample_start():
+    possible_starts = ['la','el','en','durante','cuando','son','las','eran']
+    start = random.sample(possible_starts, 1)[0]
+    return start
+        
 def get_predictions_beam(g, n, encoded_genres):
     try:
         beam_size = int(input("Introduce an integer for the beamsize: "))
     except:
         get_predictions_beam(g, n, encoded_genres)
-    #def generate_synopses(model, genres, beam_size):
-    beam_size = 2
     model = n.model
-    start = [g.word_to_index['la']]
+    start = [g.word_to_index[sample_start()]]
     synopses = [[start,0.0]]
     while(len(synopses[0][0]) < 150):
         temp_synopses = []
@@ -182,7 +183,7 @@ def interface():
 if __name__ == '__main__':
     #check_nltk_resources()
     #check_paths()
-    generate_files()
+    #generate_files()
     #test_generator()
-    #train_network()
+    train_network()
     #interface()
