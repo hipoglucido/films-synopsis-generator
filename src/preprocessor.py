@@ -233,9 +233,9 @@ class Preprocessor():
         most_frequent = sorted(genre_freqs, key = lambda x: x[1], reverse = True)
         settings.logger.info("Most frequent genres: " + str(most_frequent[:10]))
         
-        knwown_genres = [g[0] for g in most_frequent][:settings.MAX_GENERES]
+        knwown_genres = [g[0] for g in most_frequent][:settings.MAX_GENRES]
         
-        settings.logger.info("Only "+str(len(knwown_genres))+" genres will be considered (MAX_GENERES)")
+        settings.logger.info("Only "+str(len(knwown_genres))+" genres will be considered (MAX_GENRES)")
         
         def delete_unkown_genres(fgenres):
             return [genre for genre in fgenres if genre in knwown_genres]

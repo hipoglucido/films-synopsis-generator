@@ -117,15 +117,15 @@ class Generator():
                     '''
                     # print(len(genres_batch),genres_batch[0].shape,previous_words_batch.shape,next_word_batch.shape)
                     # print(next_word_batch.mean())
-                    '''
+                    
                     if 0:
-                        for j in range(settings.batch_size):
+                        for j in range(settings.BATCH_SIZE):
                             print(str(self.to_genre(genres_batch[j])).encode('latin1'))
                             print(str(self.to_synopsis(previous_words_batch[j])).encode('latin1'))
                             print(str(self.to_synopsis(np.nonzero(next_word_batch[j])[0])).encode('latin1'))
                             print("************")
                         print("____________________________________________")
-                    '''
+                    
                     yield ([genres_batch, previous_words_batch], next_word_batch)
                     batches_fed_count += 1
                     

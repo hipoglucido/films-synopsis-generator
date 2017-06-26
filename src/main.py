@@ -47,7 +47,7 @@ def generate_files():
     p.preprocess_synopses(df)
     p.preprocess_genres(df)
     p.build_indexes()
-    p.generate_embedding_weights()
+    #p.generate_embedding_weights()
     p.filter_dataset()
     p.encode_genres()
     p.encode_synopses()
@@ -78,7 +78,7 @@ def train_network():
 
     network = model.Network()
     network.load_generators(X_train, X_val, y_train, y_val)       # Synopses and genres as parameter
-    network.load_embeddings()
+    
     network.build()
     #network.load_weights()
     network.compile()
@@ -183,5 +183,5 @@ if __name__ == '__main__':
     #check_paths()
     #generate_files()
     #test_generator()
-    #train_network()
-    interface()
+    train_network()
+    #interface()

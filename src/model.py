@@ -29,28 +29,35 @@ class Network():
     def load_generators(self, X_train, X_val, y_train, y_val):
         self.train_generator = generator.Generator(X_train,y_train)
         self.train_generator.load_indexes()
+        self.train_generator.load_genre_binarizer()
         self.val_generator = generator.Generator(X_val, y_val)
         self.val_generator.load_indexes()
+        self.val_generator.load_genre_binarizer()
         #self.generator_val.initialize()
-
-    def build(self):
+        
+        
+    def build(self, use_embeddings = True):
         settings.logger.info("Building model...")
-        if self.embedding_weights is None:
-            self.load_embeddings()
-
+        self.use_embeddings = use_embeddings
         #with tf.device("/gpu:1"):
         genres_model = Sequential()
         genres_model.add(Dense(units = settings.EMBEDDING_DIM,
-                              input_dim = settings.MAX_GENERES,
+                              input_dim = settings.MAX_GENRES,
                               activation='relu'))
         genres_model.add(RepeatVector(settings.MAX_SYNOPSIS_LEN))
         #with tf.device("/gpu:0"):
         synopsis_model = Sequential()
-        synopsis_model.add(Embedding(input_dim = settings.VOCABULARY_SIZE + 1,
+        if use_embeddings:
+            self.load_embeddings()
+            synopsis_model.add(Embedding(input_dim = settings.VOCABULARY_SIZE + 1,
+                                    output_dim = settings.EMBEDDING_DIM,
+                                    weights = [self.embedding_weights],
+                                    input_length=settings.MAX_SYNOPSIS_LEN,
+                                    trainable = False))
+        else:
+            synopsis_model.add(Embedding(input_dim = settings.VOCABULARY_SIZE, 
                                 output_dim = settings.EMBEDDING_DIM,
-                                weights = [self.embedding_weights],
-                                input_length=settings.MAX_SYNOPSIS_LEN,
-                                trainable = False))
+                                input_length=settings.MAX_SYNOPSIS_LEN))
         synopsis_model.add(LSTM(units = settings.EMBEDDING_DIM,
                             return_sequences=True))
         synopsis_model.add(TimeDistributed(Dense(settings.EMBEDDING_DIM)))
@@ -82,7 +89,7 @@ class Network():
         Train the model.
         """
 
-        weights_name = 'LSTM_weights-{epoch:03d}-tloss{loss:.4f}-vloss{val_loss:.4f}.hdf5'
+        weights_name = 'LSTM_w2v'+str(self.use_embeddings)+'_v'+str(settings.VOCABULARY_SIZE)+'_g'+str(settings.MAX_GENRES)+'_w-{epoch:03d}-tloss{loss:.4f}-vloss{val_loss:.4f}.hdf5'
         file_path = os.path.join(settings.WEIGHTS_DIR,weights_name)
         
         #Add callbacks
