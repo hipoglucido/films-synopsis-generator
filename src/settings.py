@@ -23,13 +23,13 @@ TENSORBOARD_LOGS_DIR = os.path.join(DATA_DIR, 'tensorboard_logs')
 
 ##FILES
 
-GENRE_BINARIZER_PATH = os.path.join(OTHERS_DIR, '20170625T052119_genre_binarizer_25_classes.pkl')
-WORD_TO_INDEX_PATH = os.path.join(OTHERS_DIR, '20170625T052119_word_to_index.pkl')
-INDEX_TO_WORD_PATH = os.path.join(OTHERS_DIR, '20170625T052119_index_to_word.pkl')
-EMBEDDING_WEIGHTS_PATH = os.path.join(OTHERS_DIR, '20170625T054945_50001_embedding_weights.pkl')
+GENRE_BINARIZER_PATH = os.path.join(OTHERS_DIR, '20170626T023708_genre_binarizer_10_classes.pkl')
+WORD_TO_INDEX_PATH = os.path.join(OTHERS_DIR, '20170626T023708_word_to_index.pkl')
+INDEX_TO_WORD_PATH = os.path.join(OTHERS_DIR, '20170626T023708_index_to_word.pkl')
+EMBEDDING_WEIGHTS_PATH = os.path.join(OTHERS_DIR, '20170626T025245_20001_embedding_weights.pkl')
 #EMBEDDING_WEIGHTS_PATH = os.path.join(OTHERS_DIR, 'embb.pkl') 
 WORD2VEC_MODEL_PATH = os.path.join(OTHERS_DIR, 'SBW-vectors-300-min5.txt')
-INPUT_PREPROCESSED_FILMS = os.path.join(DATA_DIR,"20170625T054951_113347_preprocessed_films.pkl")
+INPUT_PREPROCESSED_FILMS = os.path.join(DATA_DIR,"20170626T025251_109214_preprocessed_films.pkl")
 
 
 ## TRAINING
@@ -39,12 +39,13 @@ WEIGHTS_PATH = os.path.join(WEIGHTS_DIR, 'LSTM_NO_EMBEDDINGS_weights-058-tloss5.
 STEPS_PER_EPOCH = 10000
 VALIDATION_SPLIT = 0.2
 STEPS_VAL = 2000
+OPTIMIZER = 'adam'#rsmprop
 
 ## PREPROCESSING
 MAX_SYNOPSIS_LEN = 150
 
-VOCABULARY_SIZE = 50000 #None will use the whole corpus vocabulary (151852)
-MAX_GENRES = 25
+VOCABULARY_SIZE = 7000 #None will use the whole corpus vocabulary (151852)
+MAX_GENRES = 8
 EOS_TOKEN = '<eos>'
 UNKNOWN_TOKEN = '<unk>'
 PAD_TOKEN = '<pad>'
@@ -54,7 +55,7 @@ MINIMUM_KNOWN_PERC_TOKENS_PER_SYNOPSIS = 0.7
 
 ## OTHER CONSTANTS
 EMBEDDING_DIM = 300#128
-
+USE_W2V = True
 
 ## DEBUGGING
 USE_SMALL_DATASET = 0

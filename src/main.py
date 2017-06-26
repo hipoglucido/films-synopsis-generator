@@ -47,7 +47,8 @@ def generate_files():
     p.preprocess_synopses(df)
     p.preprocess_genres(df)
     p.build_indexes()
-    #p.generate_embedding_weights()
+    if settings.USE_W2V:
+        p.generate_embedding_weights()
     p.filter_dataset()
     p.encode_genres()
     p.encode_synopses()
@@ -181,7 +182,7 @@ def interface():
 if __name__ == '__main__':
     #check_nltk_resources()
     #check_paths()
-    #generate_files()
+    generate_files()
     #test_generator()
-    train_network()
+    #train_network()
     #interface()

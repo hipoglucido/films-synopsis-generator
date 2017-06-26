@@ -36,7 +36,7 @@ class Network():
         #self.generator_val.initialize()
         
         
-    def build(self, use_embeddings = True):
+    def build(self):
         settings.logger.info("Building model...")
         self.use_embeddings = use_embeddings
         #with tf.device("/gpu:1"):
@@ -47,7 +47,7 @@ class Network():
         genres_model.add(RepeatVector(settings.MAX_SYNOPSIS_LEN))
         #with tf.device("/gpu:0"):
         synopsis_model = Sequential()
-        if use_embeddings:
+        if settings.USE_W2V:
             self.load_embeddings()
             synopsis_model.add(Embedding(input_dim = settings.VOCABULARY_SIZE + 1,
                                     output_dim = settings.EMBEDDING_DIM,
@@ -81,7 +81,8 @@ class Network():
         settings.logger.info("Weight embedding matrix loaded "+str(self.embedding_weights.shape))
             
     def compile(self):
-        self.model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+        settings.logger.info("Using "+settings.OPTIMIZER)
+        self.model.compile(loss='categorical_crossentropy', optimizer=settings.OPTIMIZER, metrics=['accuracy'])
 
 
     def train(self):
@@ -89,7 +90,7 @@ class Network():
         Train the model.
         """
 
-        weights_name = 'LSTM_w2v'+str(self.use_embeddings)+'_v'+str(settings.VOCABULARY_SIZE)+'_g'+str(settings.MAX_GENRES)+'_w-{epoch:03d}-tloss{loss:.4f}-vloss{val_loss:.4f}.hdf5'
+        weights_name = 'LSTM_w2v'+str(settings.USE_W2V)+'_v'+str(settings.VOCABULARY_SIZE)+'_g'+str(settings.MAX_GENRES)+'_o-'+settings.OPTIMIZER+'_w-{epoch:03d}-tloss{loss:.4f}-vloss{val_loss:.4f}.hdf5'
         file_path = os.path.join(settings.WEIGHTS_DIR,weights_name)
         
         #Add callbacks

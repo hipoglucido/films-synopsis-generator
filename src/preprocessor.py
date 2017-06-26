@@ -39,8 +39,8 @@ class Preprocessor():
             self.word_to_index[word]=i
             self.index_to_word[i]=word
         assert len(self.word_to_index) == len(self.index_to_word)
-        joblib.dump(self.word_to_index, os.path.join(settings.OTHERS_DIR, strftime("%Y%m%dT%H%M%S")+'_word_to_index.pkl'))
-        joblib.dump(self.index_to_word, os.path.join(settings.OTHERS_DIR, strftime("%Y%m%dT%H%M%S")+'_index_to_word.pkl'))
+        joblib.dump(self.word_to_index, os.path.join(settings.OTHERS_DIR, strftime("%Y%m%dT%H%M%S_")+str(settings.VOCABULARY_SIZE)+'_word_to_index.pkl'))
+        joblib.dump(self.index_to_word, os.path.join(settings.OTHERS_DIR, strftime("%Y%m%dT%H%M%S_")+str(settings.VOCABULARY_SIZE)+'_index_to_word.pkl'))
         settings.logger.info("Saved index dictionaries for "+str(len(self.word_to_index))+" words in "+settings.OTHERS_DIR)
         
     def preprocess_synopses(self, df):
@@ -111,8 +111,9 @@ class Preprocessor():
         text = re.sub(r'[^a-zA-Z\.áéíóúÁÉÍÓÚüÜñÑ]', ' ', text)
         # Remove extra spaces that were left when cleaning
         text = re.sub(r'\s+', ' ', text)
+        text = text.lower()
         '''
-        #text = text.lower()
+        #
         text_tags = pos_tag(text.split())
         final = ""
         for word, pos in text_tags:
@@ -206,7 +207,7 @@ class Preprocessor():
                     embedding_weights[index,:] = model.loc[word.title()].values
                     settings.logger.warning(self.index_to_word[index]+' ('+word+') will take the embedding of '+word.title())
                 except KeyError:
-                    if 'digito' in self.index_to_word[index]:
+                    if 'digito' in self.index_to_word[index].lower():
                         embedding_weights[index,:] = model.loc[settings.DIGIT_TOKEN].values
                         settings.logger.warning(self.index_to_word[index]+' ('+word+') will take the embedding of '+settings.DIGIT_TOKEN)
                     else:  
