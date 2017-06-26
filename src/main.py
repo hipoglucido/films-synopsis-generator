@@ -9,7 +9,6 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 import random
 from keras.preprocessing import sequence
-import nltk
 
 
 def test_generator():
@@ -77,7 +76,7 @@ def train_network():
 
     synopses, genres = load_preprocessed_data(settings.INPUT_PREPROCESSED_FILMS)
     X_train, X_val, y_train, y_val = train_test_split(
-        synopses, genres, test_size=settings.VALIDATION_SPLIT)
+        synopses, genres, test_size=settings.VALIDATION_SPLIT, random_state = settings.SEED)
 
     network = model.Network()
     network.load_generators(X_train, X_val, y_train, y_val)       # Synopses and genres as parameter
@@ -170,6 +169,8 @@ def get_predictions_beam(g, n, encoded_genres, beam_size = None, previous_words 
     synopses = g.to_synopsis(synopses[-1][0])
     return synopses
 def validation_bleu():
+    
+    import nltk
     n = model.Network()
     n.build()
     n.load_weights()
@@ -286,7 +287,8 @@ if __name__ == '__main__':
     #generate_files()
     #test_generator()
     #train_network()
-    interface()
+    validation_bleu()
+    #interface()
     #run_batch_predictions()
     #validation_bleu()
 

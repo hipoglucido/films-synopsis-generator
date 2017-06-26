@@ -21,22 +21,26 @@ OTHERS_DIR = os.path.join(DATA_DIR, "others")
 WEIGHTS_DIR = os.path.join(DATA_DIR, "weights")
 TENSORBOARD_LOGS_DIR = os.path.join(DATA_DIR, 'tensorboard_logs')
 
+'''
 
+weights/LSTM_w2v0_v20000_g10_w-005-tloss6.4035-vloss6.4556.hdf5
+weights/LSTM_w2v1_v20000_g10_w-005-tloss6.4639-vloss6.6562.hdf5
+
+'''
 ## TRAINING
 BATCH_SIZE = 128
 EPOCHS = 10000
-WEIGHTS_PATH = os.path.join(WEIGHTS_DIR, 'LSTM_w2v0_v20000_g10_w-004-tloss6.2860-vloss6.3217.hdf5')
+WEIGHTS_PATH = os.path.join(WEIGHTS_DIR, 'LSTM_w2v0_v20000_g10_w-005-tloss6.4035-vloss6.4556.hdf5')
 STEPS_PER_EPOCH = 10000
 VALIDATION_SPLIT = 0.2
 STEPS_VAL = 2000
-OPTIMIZER = 'adam'#rsmprop
-#OPTIMIZER = 'rmsprop'
+OPTIMIZER = 'rmsprop'
 
 ## PREPROCESSING
-MAX_SYNOPSIS_LEN = 150
+MAX_SYNOPSIS_LEN = 40
 
-VOCABULARY_SIZE = int(WEIGHTS_PATH.split('_v')[1].split('_g')[0])#50000 #None will use the whole corpus vocabulary (151852)
-MAX_GENRES = int(WEIGHTS_PATH.split('_g')[1].split('_w')[0])
+VOCABULARY_SIZE = 50000#int(WEIGHTS_PATH.split('_v')[1].split('_g')[0])#50000 #None will use the whole corpus vocabulary (151852)
+MAX_GENRES = 25#int(WEIGHTS_PATH.split('_g')[1].split('_w')[0])
 EOS_TOKEN = '<eos>'
 UNKNOWN_TOKEN = '<unk>'
 PAD_TOKEN = '<pad>'
@@ -46,7 +50,7 @@ MINIMUM_KNOWN_PERC_TOKENS_PER_SYNOPSIS = 0.7
 
 ## OTHER CONSTANTS
 EMBEDDING_DIM = 300#128
-USE_W2V = int(WEIGHTS_PATH.split('_w2v')[1].split('_v')[0])
+USE_W2V = 1#int(WEIGHTS_PATH.split('_w2v')[1].split('_v')[0])
 SEED = 2017
 
 ## DEBUGGING
@@ -128,4 +132,13 @@ LSTM_w2v1_v50000_g25_w-000-tloss8.6197-vloss8.7888
 LSTM_w2v1_v50000_g25_w-001-tloss8.7558-vloss8.8131
     en la la la la la la la la 
 LSTM_w2v0_v20000_g10_w-002-tloss6.0294-vloss5.7346
+
+[gvictorg@int2 src]$ squeue -u gvictorg
+             JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+           3257604       gpu      fff gvictorg  R   13:16:48      1 gcn28
+           3257603       gpu      fff gvictorg  R   13:17:06      1 gcn8
+           3256855       gpu yesrmsSm gvictorg  R   21:31:39      1 gcn11
+           3256854       gpu yesrmsSm gvictorg  R   21:32:52      1 gcn10
+           3256567       gpu       ff gvictorg  R 1-13:20:47      1 gcn14
+
 '''
