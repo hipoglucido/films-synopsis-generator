@@ -98,9 +98,8 @@ def load_preprocessed_data(path):
     return synopses, genres
     
 def get_predictions_greedy(g, n, encoded_genres):
-    print("Greedy search mode")
-    previous_words = [g.word_to_index[sample_start()]]
-    for i in range(settings.MAX_SYNOPSIS_LEN):
+    previous_words = [g.word_to_index[sample_start(g)]]
+    for i in range(50):#settings.MAX_SYNOPSIS_LEN):
         padded_previous_words = sequence.pad_sequences([previous_words], maxlen=settings.MAX_SYNOPSIS_LEN, padding='post', value = g.word_to_index[settings.PAD_TOKEN])
         next_word_probs = n.model.predict([encoded_genres,padded_previous_words])[0]
         sorted_words = np.argsort(next_word_probs)
@@ -113,10 +112,30 @@ def get_predictions_greedy(g, n, encoded_genres):
         #print(encoded_genres.shape)
     previous_words = g.to_synopsis(previous_words)
     return previous_words
-def sample_start():
-    possible_starts = ['la','el','en','durante','cuando','son','las','eran']
+    
+def sample_start(g):
+    s = ['la','el','en','durante','cuando','son','las','eran']*10
+    possible_starts = list(g.word_to_index.keys()) + s
     start = random.sample(possible_starts, 1)[0]
     return start
+def run_batch_predictions():
+    settings.logger.info("Starting batch predictions...")
+    n = model.Network()
+    n.build()
+    n.load_weights()
+    g = generator.Generator(None, None)
+    g.load_indexes()
+    g.load_genre_binarizer()      
+    possible_genres = list(g.mlb.classes_) 
+    
+    for i in range(20):
+        settings.logger.info("Sample "+str(i)+"________________")
+        n_genres = random.randint(1,6)
+        input_genres = random.sample(possible_genres, n_genres)
+        settings.logger.info("Input genres:"+', '.join(input_genres))
+        encoded_genres = g.mlb.transform([input_genres])
+        syn = get_predictions_greedy(g, n, encoded_genres)
+        settings.logger.info("Synopsis: "+syn)
         
 def get_predictions_beam(g, n, encoded_genres):
     try:
@@ -124,7 +143,7 @@ def get_predictions_beam(g, n, encoded_genres):
     except:
         get_predictions_beam(g, n, encoded_genres)
     model = n.model
-    start = [g.word_to_index[sample_start()]]
+    start = [g.word_to_index[sample_start(g)]]
     synopses = [[start,0.0]]
     while(len(synopses[0][0]) < 150):
         temp_synopses = []
@@ -147,10 +166,13 @@ def get_predictions_beam(g, n, encoded_genres):
 def get_predictions(g, n):
     possible_genres = list(g.mlb.classes_)
     print("Possible film genres: ",','.join(possible_genres)) 
-    input_line = input("Insert a comma separated set of genres (r for random): ")
+    input_line = input("Insert a comma separated set of genres (r for random, q for quit): ")
+    if input_line == 'q':
+        exit()
     randomly = input_line == 'r'
+    
     if randomly:
-        n_genres = random.randint(1,7)
+        n_genres = random.randint(1,6)
         input_genres = random.sample(possible_genres, n_genres)
     else:
         input_genres = input_line.split(',')
@@ -162,6 +184,7 @@ def get_predictions(g, n):
     encoded_genres = g.mlb.transform([input_genres])
     mode = input("Input g or b for greedy or beam search mode: ")
     if mode == 'g':
+        print("Greedy search mode")
         syn = [get_predictions_greedy(g, n, encoded_genres)]
     else:
         syn = get_predictions_beam(g, n, encoded_genres)
@@ -172,7 +195,6 @@ def get_predictions(g, n):
 def interface():
     settings.logger.info("Starting user interface...")
     n = model.Network()
-    n.load_embeddings()
     n.build()
     n.load_weights()
     g = generator.Generator(None, None)
@@ -185,5 +207,6 @@ if __name__ == '__main__':
     #check_paths()
     #generate_files()
     #test_generator()
-    train_network()
+    #train_network()
     #interface()
+    run_batch_predictions()

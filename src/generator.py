@@ -35,7 +35,7 @@ class Generator():
     def load_genre_binarizer(self):
         filepath = settings.GENRE_BINARIZER_PATH
         self.mlb = joblib.load(filepath)
-        settings.logger.info(filepath + ' loaded')
+        settings.logger.info('Loaded binarizer '+filepath)
 
     def to_genre(self, vector):
         """
