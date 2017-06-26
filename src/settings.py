@@ -25,7 +25,7 @@ TENSORBOARD_LOGS_DIR = os.path.join(DATA_DIR, 'tensorboard_logs')
 ## TRAINING
 BATCH_SIZE = 128
 EPOCHS = 10000
-WEIGHTS_PATH = os.path.join(WEIGHTS_DIR, 'LSTM_w2v1_v20000_g10_w-001-tloss6.7726-vloss6.7820.hdf5')
+WEIGHTS_PATH = os.path.join(WEIGHTS_DIR, 'LSTM_w2v0_v20000_g10_w-003-tloss6.0926-vloss6.2683.hdf5')
 STEPS_PER_EPOCH = 10000
 VALIDATION_SPLIT = 0.2
 STEPS_VAL = 2000
@@ -47,7 +47,7 @@ MINIMUM_KNOWN_PERC_TOKENS_PER_SYNOPSIS = 0.7
 ## OTHER CONSTANTS
 EMBEDDING_DIM = 300#128
 USE_W2V = int(WEIGHTS_PATH.split('_w2v')[1].split('_v')[0])
-
+SEED = 2017
 
 ## DEBUGGING
 USE_SMALL_DATASET = 0
@@ -127,4 +127,5 @@ LSTM_w2v1_v50000_g25_w-000-tloss8.6197-vloss8.7888
     son la la la la la la la la la la 
 LSTM_w2v1_v50000_g25_w-001-tloss8.7558-vloss8.8131
     en la la la la la la la la 
+LSTM_w2v0_v20000_g10_w-002-tloss6.0294-vloss5.7346
 '''

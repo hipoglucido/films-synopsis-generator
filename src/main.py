@@ -9,6 +9,8 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 import random
 from keras.preprocessing import sequence
+import nltk
+
 
 def test_generator():
 
@@ -16,7 +18,7 @@ def test_generator():
     print(synopses[:20])
     print(genres[:20])
     X_train, X_val, y_train, y_val = train_test_split(
-        synopses, genres, test_size=settings.VALIDATION_SPLIT)
+        synopses, genres, test_size=settings.VALIDATION_SPLIT, random_state = settings.SEED)
     c= generator.Generator(X_train, y_train)
     c.load_genre_binarizer()
     c.load_indexes()
@@ -97,8 +99,11 @@ def load_preprocessed_data(path):
     settings.logger.info("Loaded preprocessed films from " + str(path))
     return synopses, genres
     
-def get_predictions_greedy(g, n, encoded_genres):
-    previous_words = [g.word_to_index[sample_start(g)]]
+def get_predictions_greedy(g, n, encoded_genres, previous_words = None):
+    if not previous_words:
+        previous_words = [g.word_to_index[sample_start(g)]]
+    else:
+        previous_words = [g.word_to_index[word] for word in previous_words]
     for i in range(50):#settings.MAX_SYNOPSIS_LEN):
         padded_previous_words = sequence.pad_sequences([previous_words], maxlen=settings.MAX_SYNOPSIS_LEN, padding='post', value = g.word_to_index[settings.PAD_TOKEN])
         next_word_probs = n.model.predict([encoded_genres,padded_previous_words])[0]
@@ -134,18 +139,21 @@ def run_batch_predictions():
         input_genres = random.sample(possible_genres, n_genres)
         settings.logger.info("Input genres:"+', '.join(input_genres))
         encoded_genres = g.mlb.transform([input_genres])
-        syn = get_predictions_greedy(g, n, encoded_genres)
+        #syn = get_predictions_greedy(g, n, encoded_genres)
+        syn = get_predictions_beam(g, n, encoded_genres, 4)
         settings.logger.info("Synopsis: "+syn)
         
-def get_predictions_beam(g, n, encoded_genres):
-    try:
+def get_predictions_beam(g, n, encoded_genres, beam_size = None, previous_words = None):
+    if not beam_size:
         beam_size = int(input("Introduce an integer for the beamsize: "))
-    except:
-        get_predictions_beam(g, n, encoded_genres)
+    
     model = n.model
-    start = [g.word_to_index[sample_start(g)]]
+    if not previous_words:
+        start = [g.word_to_index[sample_start(g)]]
+    else:
+        start = previous_words
     synopses = [[start,0.0]]
-    while(len(synopses[0][0]) < 150):
+    while(len(synopses[0][0]) < 30):
         temp_synopses = []
         for synopsis in synopses:
             
@@ -160,8 +168,56 @@ def get_predictions_beam(g, n, encoded_genres):
         synopses = temp_synopses
         synopses.sort(key = lambda l:l[1])
         synopses = synopses[-beam_size:]
-    synopses = [g.to_synopsis(s[0]) for s in synopses]
+    synopses = g.to_synopsis(synopses[-1][0])
     return synopses
+def validation_bleu():
+    n = model.Network()
+    n.build()
+    n.load_weights()
+    g = generator.Generator(None, None)
+    g.load_indexes()
+    g.load_genre_binarizer()
+    synopses, genres = load_preprocessed_data(settings.INPUT_PREPROCESSED_FILMS)
+    _, tsynopses, _,  tgenres = train_test_split(
+        synopses, genres, test_size=settings.VALIDATION_SPLIT, random_state = settings.SEED)
+    
+    preds = [
+        'Conjunto que tres no que se acerca a la vida de un grupo de personas en distintas edades y no y que están porque por <unk> situaciones . <eos>',
+        'Una pareja muere sola sin una isla . Él pesca con su barco y y es ama de casa . <eos>',
+        'Serie de TV . DIGITO llega . lo episodios . Serie que continúa las aventuras del en <unk> en el lejano este . <eos>'
+    ]
+    w = 3
+    help_words = 4
+    beam_size = 2
+    mode = 'g'
+    references = []
+    hypotheses = []
+    limit = settings.MAX_SYNOPSIS_LEN
+    limit = 100
+    total = min(w, len(tsynopses))
+    i = 0
+    for ts, tg, p in zip(tsynopses[:w], tgenres[:w], preds[:w]):
+        i += 1
+        ts = ts[:limit]
+        tsw = g.to_synopsis(ts)
+        p = ' '.join(p.split()[:limit])
+        settings.logger.info("_________________________"+str(100*i/total)[:4]+'%')
+        settings.logger.info("Genres: "+g.to_genre(tg))
+        settings.logger.info("True synopsis: "+tsw)
+        encoded_genres = np.array([tg])
+        previous_words = ts[:help_words]
+        settings.logger.info("Help words: "+g.to_synopsis(previous_words))
+        if mode == 'g':
+            psynopsis = get_predictions_greedy(g, n, encoded_genres, previous_words)
+            #psynopsis =  p
+            settings.logger.info(psynopsis)
+        else:
+            psynopsis = get_predictions_beam(g, n, encoded_genres, beam_size, previous_words)
+        settings.logger.info("Pred synopsis: "+psynopsis)
+        references.append(tsw.split())
+        hypotheses.append(psynopsis.split())
+    bs = nltk.translate.bleu_score.corpus_bleu(references, hypotheses)
+    settings.logger.info("BLEU score: "+str(bs))
 
 def get_predictions(g, n):
     possible_genres = list(g.mlb.classes_)
@@ -170,7 +226,7 @@ def get_predictions(g, n):
     if input_line == 'q':
         exit()
     randomly = input_line == 'r'
-    
+    p = preprocessor.Preprocessor()
     if randomly:
         n_genres = random.randint(1,6)
         input_genres = random.sample(possible_genres, n_genres)
@@ -183,13 +239,22 @@ def get_predictions(g, n):
     print("Input genres: ",', '.join(input_genres))
     encoded_genres = g.mlb.transform([input_genres])
     mode = input("Input g or b for greedy or beam search mode: ")
+    previous_words = input("Introduce help/previous words (optional): ")
+    previous_words = p.clean_text(previous_words)
+    previous_words = p.tokenize(previous_words)
+
+    if previous_words == '':
+        previous_words = None
+
     if mode == 'g':
         print("Greedy search mode")
-        syn = [get_predictions_greedy(g, n, encoded_genres)]
+        syn = get_predictions_greedy(g, n, encoded_genres, previous_words)
+    elif mode == 'b':
+        syn = get_predictions_beam(g, n, encoded_genres, previous_words)
     else:
-        syn = get_predictions_beam(g, n, encoded_genres)
-    for s in syn:
-        print("Synopsis: ",s)
+        print("Wrong mode")
+        get_predictions(g, n)
+    print("Synopsis: ",syn)
     get_predictions(g, n)
     
 def interface():
@@ -208,5 +273,7 @@ if __name__ == '__main__':
     #generate_files()
     #test_generator()
     #train_network()
-    #interface()
-    run_batch_predictions()
+    interface()
+    #run_batch_predictions()
+    #validation_bleu()
+
