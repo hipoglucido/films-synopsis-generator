@@ -25,7 +25,7 @@ TENSORBOARD_LOGS_DIR = os.path.join(DATA_DIR, 'tensorboard_logs')
 ## TRAINING
 BATCH_SIZE = 128
 EPOCHS = 10000
-WEIGHTS_PATH = os.path.join(WEIGHTS_DIR, 'LSTM_w2v0_v20000_g10_w-001-tloss6.2432-vloss6.2178.hdf5')
+WEIGHTS_PATH = os.path.join(WEIGHTS_DIR, 'LSTM_w2v1_v20000_g10_w-001-tloss6.7726-vloss6.7820.hdf5')
 STEPS_PER_EPOCH = 10000
 VALIDATION_SPLIT = 0.2
 STEPS_VAL = 2000
@@ -35,8 +35,8 @@ OPTIMIZER = 'adam'#rsmprop
 ## PREPROCESSING
 MAX_SYNOPSIS_LEN = 150
 
-VOCABULARY_SIZE = 7000 #None will use the whole corpus vocabulary (151852)
-MAX_GENRES = 8
+VOCABULARY_SIZE = int(WEIGHTS_PATH.split('_v')[1].split('_g')[0])#50000 #None will use the whole corpus vocabulary (151852)
+MAX_GENRES = int(WEIGHTS_PATH.split('_g')[1].split('_w')[0])
 EOS_TOKEN = '<eos>'
 UNKNOWN_TOKEN = '<unk>'
 PAD_TOKEN = '<pad>'
@@ -46,7 +46,8 @@ MINIMUM_KNOWN_PERC_TOKENS_PER_SYNOPSIS = 0.7
 
 ## OTHER CONSTANTS
 EMBEDDING_DIM = 300#128
-USE_W2V = True
+USE_W2V = int(WEIGHTS_PATH.split('_w2v')[1].split('_v')[0])
+
 
 ## DEBUGGING
 USE_SMALL_DATASET = 0
@@ -97,3 +98,33 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 logger.info("Starting...")
+logger.info("Vocabulary size: "+str(VOCABULARY_SIZE))
+logger.info("Genres: "+str(MAX_GENRES))
+logger.info("W2V: "+str(USE_W2V))
+logger.info("weights: "+str(WEIGHTS_PATH))
+
+'''
+LSTM_w2v0_v50000_g25_w-002-tloss9.2741-vloss9.2650
+    de de de
+LSTM_w2v1_v50000_g25_w-001-tloss8.7558-vloss8.8131
+    la la la
+LSTM_w2v0_v20000_g10_w-001-tloss6.2432-vloss6.2178
+    en la ciudad de <unk> <unk> <unk> <u
+     eran <unk> y <unk> <unk> <unk>
+LSTM_w2v0_v50000_g25_w-001-tloss9.2194-vloss9.2695
+    . . . . 
+LSTM_w2v0_v50000_g25_w-002-tloss9.2741-vloss9.2650
+    de de de de
+LSTM_w2v0_v50000_g25_w-002-tloss10.2058-vloss10.5667
+    de de de
+LSTM_w2v1_v20000_g10_w-000-tloss6.5921-vloss6.6136
+    la de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de de <unk> de <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk>
+LSTM_w2v1_v20000_g10_w-001-tloss6.7726-vloss6.7820
+    en la historia de la historia de la <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk>
+     en la historia de la historia de la <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk>
+     el <unk> <unk> <unk> <unk> <unk>
+LSTM_w2v1_v50000_g25_w-000-tloss8.6197-vloss8.7888
+    son la la la la la la la la la la 
+LSTM_w2v1_v50000_g25_w-001-tloss8.7558-vloss8.8131
+    en la la la la la la la la 
+'''
