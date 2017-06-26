@@ -104,7 +104,7 @@ def get_predictions_greedy(g, n, encoded_genres, previous_words = None):
         previous_words = [g.word_to_index[sample_start(g)]]
     else:
         previous_words = [g.word_to_index[word] for word in previous_words]
-    for i in range(50):#settings.MAX_SYNOPSIS_LEN):
+    for i in range(20):#settings.MAX_SYNOPSIS_LEN):
         padded_previous_words = sequence.pad_sequences([previous_words], maxlen=settings.MAX_SYNOPSIS_LEN, padding='post', value = g.word_to_index[settings.PAD_TOKEN])
         next_word_probs = n.model.predict([encoded_genres,padded_previous_words])[0]
         sorted_words = np.argsort(next_word_probs)
@@ -151,12 +151,11 @@ def get_predictions_beam(g, n, encoded_genres, beam_size = None, previous_words 
     if not previous_words:
         start = [g.word_to_index[sample_start(g)]]
     else:
-        start = previous_words
+        start = [g.word_to_index[word] for word in previous_words]
     synopses = [[start,0.0]]
     while(len(synopses[0][0]) < 30):
         temp_synopses = []
         for synopsis in synopses:
-            
             partial_synopsis = sequence.pad_sequences([synopsis[0]], maxlen=settings.MAX_SYNOPSIS_LEN, padding='post', value = g.word_to_index[settings.PAD_TOKEN])
             next_words_pred = model.predict([encoded_genres, np.asarray(partial_synopsis)])[0]
             next_words = np.argsort(next_words_pred)[-beam_size:]
@@ -206,6 +205,14 @@ def validation_bleu():
         settings.logger.info("True synopsis: "+tsw)
         encoded_genres = np.array([tg])
         previous_words = ts[:help_words]
+        
+        prvs = []
+        for pw in previous_words:
+            if pw in g.word_to_index.keys():
+                prvs.append(pw)
+            else:
+                prvs.append(settings.UNKNOWN_TOKEN)
+        previous_words = prvs
         settings.logger.info("Help words: "+g.to_synopsis(previous_words))
         if mode == 'g':
             psynopsis = get_predictions_greedy(g, n, encoded_genres, previous_words)
@@ -222,7 +229,7 @@ def validation_bleu():
 def get_predictions(g, n):
     possible_genres = list(g.mlb.classes_)
     print("Possible film genres: ",','.join(possible_genres)) 
-    input_line = input("Insert a comma separated set of genres (r for random, q for quit): ")
+    input_line = 'r'#input("Insert a comma separated set of genres (r for random, q for quit): ")
     if input_line == 'q':
         exit()
     randomly = input_line == 'r'
@@ -241,16 +248,22 @@ def get_predictions(g, n):
     mode = input("Input g or b for greedy or beam search mode: ")
     previous_words = input("Introduce help/previous words (optional): ")
     previous_words = p.clean_text(previous_words)
-    previous_words = p.tokenize(previous_words)
-
+    previous_words = p.tokenize(previous_words)[:-1]
+    prvs = []
+    for pw in previous_words:
+        if pw in g.word_to_index.keys():
+            prvs.append(pw)
+        else:
+            prvs.append(settings.UNKNOWN_TOKEN)
     if previous_words == '':
         previous_words = None
-
+    print("Starting words: "+str(previous_words))
     if mode == 'g':
         print("Greedy search mode")
         syn = get_predictions_greedy(g, n, encoded_genres, previous_words)
     elif mode == 'b':
-        syn = get_predictions_beam(g, n, encoded_genres, previous_words)
+        print("Beam search mode")
+        syn = get_predictions_beam(g=g, n=n, encoded_genres=encoded_genres, previous_words=previous_words)
     else:
         print("Wrong mode")
         get_predictions(g, n)
