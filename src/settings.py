@@ -19,28 +19,33 @@ ROOT_DIR = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file
 DATA_DIR = os.path.join(ROOT_DIR, "data")
 OTHERS_DIR = os.path.join(DATA_DIR, "others")
 WEIGHTS_DIR = os.path.join(DATA_DIR, "weights")
+PREDICTIONS_DIR = os.path.join(OTHERS_DIR, "predictions")
 TENSORBOARD_LOGS_DIR = os.path.join(DATA_DIR, 'tensorboard_logs')
 
 '''
 
-weights/LSTM_w2v0_v20000_g10_w-005-tloss6.4035-vloss6.4556.hdf5
-weights/LSTM_w2v1_v20000_g10_w-005-tloss6.4639-vloss6.6562.hdf5
+LSTM_w2v0_v20000_g10_w-005-tloss6.4035-vloss6.4556.hdf5
+LSTM_w2v1_v20000_g10_w-005-tloss6.4639-vloss6.6562.hdf5
+LSTM_w2v0_v7000_g8_w-002-tloss5.9603-vloss5.9640.hdf5
+LSTM_w2v1_v7000_g8_w-002-tloss5.1118-vloss4.8778.hdf5
 
+LSTM_w2v1_v50000_g25_w-003-tloss8.8982-vloss8.9871
+LSTM_w2v0_v50000_g25_w-003-tloss9.3067-vloss9.3207
 '''
 ## TRAINING
 BATCH_SIZE = 128
 EPOCHS = 10000
-WEIGHTS_PATH = os.path.join(WEIGHTS_DIR, 'LSTM_w2v0_v20000_g10_w-005-tloss6.4035-vloss6.4556.hdf5')
+WEIGHTS_PATH = os.path.join(WEIGHTS_DIR, 'LSTM_w2v0_v50000_g25_w-003-tloss9.3067-vloss9.3207.hdf5')
 STEPS_PER_EPOCH = 10000
 VALIDATION_SPLIT = 0.2
 STEPS_VAL = 2000
 OPTIMIZER = 'rmsprop'
 
 ## PREPROCESSING
-MAX_SYNOPSIS_LEN = 40
+MAX_SYNOPSIS_LEN = 50
 
-VOCABULARY_SIZE = 50000#int(WEIGHTS_PATH.split('_v')[1].split('_g')[0])#50000 #None will use the whole corpus vocabulary (151852)
-MAX_GENRES = 25#int(WEIGHTS_PATH.split('_g')[1].split('_w')[0])
+VOCABULARY_SIZE = int(WEIGHTS_PATH.split('_v')[1].split('_g')[0])#50000 #None will use the whole corpus vocabulary (151852)
+MAX_GENRES = int(WEIGHTS_PATH.split('_g')[1].split('_w')[0])
 EOS_TOKEN = '<eos>'
 UNKNOWN_TOKEN = '<unk>'
 PAD_TOKEN = '<pad>'
@@ -50,13 +55,14 @@ MINIMUM_KNOWN_PERC_TOKENS_PER_SYNOPSIS = 0.7
 
 ## OTHER CONSTANTS
 EMBEDDING_DIM = 300#128
-USE_W2V = 1#int(WEIGHTS_PATH.split('_w2v')[1].split('_v')[0])
+USE_W2V = int(WEIGHTS_PATH.split('_w2v')[1].split('_v')[0])
 SEED = 2017
 
 ## DEBUGGING
 USE_SMALL_DATASET = 0
 USE_SMALL_WORD2VEC = 0
 PRINT_MODEL_SUMMARY = 1
+
 
 ##FILES
 assert any ([MAX_GENRES == 25 and VOCABULARY_SIZE == 50000,

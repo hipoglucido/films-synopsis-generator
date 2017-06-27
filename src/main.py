@@ -8,7 +8,7 @@ import pickle as pk
 import numpy as np
 from sklearn.model_selection import train_test_split
 import random
-from keras.preprocessing import sequence
+
 
 
 def test_generator():
@@ -99,11 +99,12 @@ def load_preprocessed_data(path):
     return synopses, genres
     
 def get_predictions_greedy(g, n, encoded_genres, previous_words = None):
+    from keras.preprocessing import sequence
     if not previous_words:
         previous_words = [g.word_to_index[sample_start(g)]]
     else:
         previous_words = [g.word_to_index[word] for word in previous_words]
-    for i in range(20):#settings.MAX_SYNOPSIS_LEN):
+    for i in range(settings.MAX_SYNOPSIS_LEN):
         padded_previous_words = sequence.pad_sequences([previous_words], maxlen=settings.MAX_SYNOPSIS_LEN, padding='post', value = g.word_to_index[settings.PAD_TOKEN])
         next_word_probs = n.model.predict([encoded_genres,padded_previous_words])[0]
         sorted_words = np.argsort(next_word_probs)
@@ -132,7 +133,7 @@ def run_batch_predictions():
     g.load_genre_binarizer()      
     possible_genres = list(g.mlb.classes_) 
     
-    for i in range(20):
+    for i in range(100):
         settings.logger.info("Sample "+str(i)+"________________")
         n_genres = random.randint(1,6)
         input_genres = random.sample(possible_genres, n_genres)
@@ -143,6 +144,7 @@ def run_batch_predictions():
         settings.logger.info("Synopsis: "+syn)
         
 def get_predictions_beam(g, n, encoded_genres, beam_size = None, previous_words = None):
+    from keras.preprocessing import sequence
     if not beam_size:
         beam_size = int(input("Introduce an integer for the beamsize: "))
     
@@ -152,7 +154,7 @@ def get_predictions_beam(g, n, encoded_genres, beam_size = None, previous_words 
     else:
         start = [g.word_to_index[word] for word in previous_words]
     synopses = [[start,0.0]]
-    while(len(synopses[0][0]) < 30):
+    while(len(synopses[0][0]) < settings.MAX_SYNOPSIS_LEN):
         temp_synopses = []
         for synopsis in synopses:
             partial_synopsis = sequence.pad_sequences([synopsis[0]], maxlen=settings.MAX_SYNOPSIS_LEN, padding='post', value = g.word_to_index[settings.PAD_TOKEN])
@@ -171,6 +173,8 @@ def get_predictions_beam(g, n, encoded_genres, beam_size = None, previous_words 
 def validation_bleu():
     
     import nltk
+    import pandas as pd
+
     n = model.Network()
     n.build()
     n.load_weights()
@@ -186,46 +190,50 @@ def validation_bleu():
         'Una pareja muere sola sin una isla . Él pesca con su barco y y es ama de casa . <eos>',
         'Serie de TV . DIGITO llega . lo episodios . Serie que continúa las aventuras del en <unk> en el lejano este . <eos>'
     ]
-    w = 3
-    help_words = 4
-    beam_size = 2
-    mode = 'g'
+ 
+    help_words = 3
+    beam_size = 4
+    mode = 'b'
     references = []
     hypotheses = []
-    limit = settings.MAX_SYNOPSIS_LEN
-    limit = 100
-    total = min(w, len(tsynopses))
+    
+    predictions = []
+    
+    total = len(tsynopses)
     i = 0
-    for ts, tg, p in zip(tsynopses[:w], tgenres[:w], preds[:w]):
+    filename = 'Preds_'+settings.WEIGHTS_PATH.split('STM_')[1].split('.hdf')[0]+'_h'+str(help_words)+'.csv'
+    settings.logger.info("Computing CORPUS BLEU SCORE for "+str(total)+" synopses...")
+    for ts, tg in zip(tsynopses, tgenres):
         i += 1
-        ts = ts[:limit]
+        prediction = {}
+        ts = ts[:settings.MAX_SYNOPSIS_LEN]
         tsw = g.to_synopsis(ts)
-        p = ' '.join(p.split()[:limit])
+        #p = ' '.join(p.split()[:settings.MAX_SYNOPSIS_LEN])
         settings.logger.info("_________________________"+str(100*i/total)[:4]+'%')
-        settings.logger.info("Genres: "+g.to_genre(tg))
-        settings.logger.info("True synopsis: "+tsw)
+        prediction['Genre'] = g.to_genre(tg)
+        settings.logger.info("Genres: "+prediction['Genre'])
+        prediction['Original'] = tsw
+        settings.logger.info("True synopsis: "+prediction['Original'])
         encoded_genres = np.array([tg])
-        previous_words = ts[:help_words]
-        
-        prvs = []
-        for pw in previous_words:
-            if pw in g.word_to_index.keys():
-                prvs.append(pw)
-            else:
-                prvs.append(settings.UNKNOWN_TOKEN)
-        previous_words = prvs
-        settings.logger.info("Help words: "+g.to_synopsis(previous_words))
+        previous_words = tsw.split()[:help_words]
+
+        settings.logger.info("Help words: "+str(previous_words))
         if mode == 'g':
             psynopsis = get_predictions_greedy(g, n, encoded_genres, previous_words)
             #psynopsis =  p
-            settings.logger.info(psynopsis)
         else:
             psynopsis = get_predictions_beam(g, n, encoded_genres, beam_size, previous_words)
+        prediction['Prediction'] = psynopsis   
+        predictions.append(prediction)
         settings.logger.info("Pred synopsis: "+psynopsis)
         references.append(tsw.split())
         hypotheses.append(psynopsis.split())
-    bs = nltk.translate.bleu_score.corpus_bleu(references, hypotheses)
-    settings.logger.info("BLEU score: "+str(bs))
+        current_score = nltk.translate.bleu_score.corpus_bleu(references, hypotheses)
+        prediction['Current_BLEU'] = current_score 
+        settings.logger.info("current BLEU score: "+str(prediction['Current_BLEU']))
+        pd.DataFrame(predictions).to_csv(os.path.join(settings.PREDICTIONS_DIR,filename))
+    final_score = current_score
+    settings.logger.info("final BLEU score: "+str(final_score))
 
 def get_predictions(g, n):
     possible_genres = list(g.mlb.classes_)
