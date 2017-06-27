@@ -22,7 +22,7 @@ Lets put the code in the `src` folder and all the input and output data in the `
 ```
 
 
-## Useful links
+## Useful links and references
 - RNN basics: [The Unreasonable Effectiveness of Recurrent Neural Networks](http://karpathy.github.io/2015/05/21/rnn-effectiveness/)
 - LSTM basics: [Understanding LSTM Networks](http://colah.github.io/posts/2015-08-Understanding-LSTMs/)
 - At prediction time we will use Beam Search to generate various synopsis from the same set of genres: [Beam Search video](https://www.youtube.com/watch?v=UXW6Cs82UKo)
