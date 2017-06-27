@@ -41,7 +41,9 @@ def test_generator():
 
             
 def generate_files():
-
+    check_nltk_resources()
+    check_paths()
+    
     p = preprocessor.Preprocessor()
     df = p.load_dataset()
     
@@ -69,6 +71,7 @@ def check_paths():
         os.makedirs(settings.TENSORBOARD_LOGS_DIR)
 
 def check_nltk_resources():
+    import nltk
     nltk.download('averaged_perceptron_tagger')
 
 
@@ -82,7 +85,6 @@ def train_network():
     network.load_generators(X_train, X_val, y_train, y_val)       # Synopses and genres as parameter
     
     network.build()
-    #network.load_weights()
     network.compile()
     network.train()
 
@@ -92,7 +94,6 @@ def load_preprocessed_data(path):
     Loads preprocessed lists of synopses and genres
     """
     films_preprocessed = joblib.load(path)
-#    films_preprocessed = pk.load(path)
     genres = films_preprocessed[0]
     synopses = films_preprocessed[1]
     settings.logger.info("Loaded preprocessed films from " + str(path))
@@ -132,16 +133,18 @@ def run_batch_predictions():
     g.load_indexes()
     g.load_genre_binarizer()      
     possible_genres = list(g.mlb.classes_) 
-    
-    for i in range(100):
+    possible_genres = ['Comedia', 'Documental', 'Romance', 'Thriller', 'Acción']
+    possible_genres = ['Romance', 'Acción']
+    for i in range(1000):
         settings.logger.info("Sample "+str(i)+"________________")
-        n_genres = random.randint(1,6)
+        n_genres = random.randint(1,3)
         input_genres = random.sample(possible_genres, n_genres)
         settings.logger.info("Input genres:"+', '.join(input_genres))
         encoded_genres = g.mlb.transform([input_genres])
-        #syn = get_predictions_greedy(g, n, encoded_genres)
-        syn = get_predictions_beam(g, n, encoded_genres, 4)
-        settings.logger.info("Synopsis: "+syn)
+        synG = get_predictions_beam(g, n, encoded_genres, 4, ['La'])
+        settings.logger.info("BEAM synopsis: "+synG)
+        #synb = get_predictions_greedy(g, n, encoded_genres)
+        #settings.logger.info("GREEDY synopsis: "+synb)
         
 def get_predictions_beam(g, n, encoded_genres, beam_size = None, previous_words = None):
     from keras.preprocessing import sequence
@@ -154,7 +157,7 @@ def get_predictions_beam(g, n, encoded_genres, beam_size = None, previous_words 
     else:
         start = [g.word_to_index[word] for word in previous_words]
     synopses = [[start,0.0]]
-    while(len(synopses[0][0]) < settings.MAX_SYNOPSIS_LEN):
+    while(len(synopses[0][0]) < 60):
         temp_synopses = []
         for synopsis in synopses:
             partial_synopsis = sequence.pad_sequences([synopsis[0]], maxlen=settings.MAX_SYNOPSIS_LEN, padding='post', value = g.word_to_index[settings.PAD_TOKEN])
@@ -290,13 +293,12 @@ def interface():
     get_predictions(g, n)
 
 if __name__ == '__main__':
-    #check_nltk_resources()
-    #check_paths()
+
     #generate_files()
     #test_generator()
     #train_network()
-    validation_bleu()
-    #interface()
+    #validation_bleu()
+    interface()
     #run_batch_predictions()
     #validation_bleu()
 
