@@ -9,20 +9,16 @@ For training the net we will be using a dataset of >100K pairs of <genres,synops
 Lets put the code in the `src` folder and all the input and output data in the `data` folder (without pushing any data to the repo).
 ```
 .
-|-- data
-|   |-- synopsis_genres.csv
-|   |-- tensorboard_logs
-|   |   |-- events.out.tfevents.1495367144.gcn46
-|   |   |-- events.out.tfevents.1495369120.gcn26
-|   `-- weights
-|       |-- LSTM_weights-000-tloss7.5512.hdf5
-|       |-- LSTM_weights-010-tloss5.8832.hdf5
-|       |-- LSTM_weights-011-tloss5.8455.hdf5
-|       `-- README.md
-|-- proposal.pdf
-`-- src
-    |-- main.py
-    |-- settings.py
+├── data
+│   ├── others
+│   │   └── predictions
+│   ├── tensorboard_logs
+│   └── weights
+├── notebooks
+├── src
+│   
+└── tensorboard_logs
+
 ```
 
 
